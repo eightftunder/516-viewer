@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>516 viewer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root {
+    --bg: #F5F5F3;
+    --card: #FFFFFF;
+    --ink: #141414;
+    --muted: #606060;
+    --faint: #A0A0A0;
+    --line: #E2E2E2;
+    --line2: #C8C8C8;
+    --r: 9px;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px; line-height: 1.6;
+    padding: max(16px, env(safe-area-inset-top)) 16px 60px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+
+  /* ── 헤더 ── */
+  .top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 0 18px;
+  }
+  .top h1 {
+    font-family: "Outfit", sans-serif;
+    font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin: 0;
+  }
+  .top-right { display: flex; align-items: center; gap: 9px; }
+  .tok-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--line2); flex-shrink: 0; }
+  .tok-dot.on { background: var(--ink); }
+  #changeBtn {
+    font-size: 12px; color: var(--faint); background: none; border: none;
+    cursor: pointer; padding: 0; font-family: inherit; text-decoration: underline;
+  }
+  #changeBtn:hover { color: var(--ink); }
+
+  /* ── 토큰 패널 ── */
+  .tok-panel {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--r);
+    padding: 14px; margin-bottom: 18px;
+  }
+  .tok-panel label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 7px; }
+  .tok-row { display: flex; gap: 8px; }
+  .tok-row input { flex: 1; }
+  .err-msg { font-size: 12px; color: #B94040; margin-top: 8px; }
+
+  /* ── 공용 인풋/버튼 ── */
+  input {
+    font-family: "Pretendard", sans-serif; font-size: 14px;
+    padding: 9px 11px; border: 1px solid var(--line); border-radius: var(--r);
+    background: #fff; color: var(--ink); width: 100%; outline: none;
+  }
+  input:focus { border-color: var(--ink); }
+  button {
+    font-family: "Pretendard", sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; padding: 9px 14px; border-radius: var(--r);
+    border: 1px solid var(--line); background: #fff; color: var(--ink);
+    white-space: nowrap;
+  }
+  button.primary { background: var(--ink); border-color: var(--ink); color: #fff; }
+  button:disabled { opacity: .4; cursor: default; }
+
+  /* ── 컬렉션 ── */
+  .coll-row { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 14px; }
+  .coll-chip {
+    font-size: 13px; font-family: "Pretendard", sans-serif; font-weight: 500;
+    padding: 6px 13px; border-radius: 999px;
+    border: 1px solid var(--line); background: #fff; color: var(--muted); cursor: pointer;
+  }
+  .coll-chip.sel { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .coll-count { opacity: .5; margin-left: 4px; font-size: 11px; }
+  .progress { height: 2px; background: var(--line); border-radius: 2px; overflow: hidden; margin: 8px 0 4px; }
+  .progress > span { display: block; height: 100%; background: var(--ink); width: 0; transition: width .2s; }
+  .load-msg { font-size: 12px; color: var(--faint); min-height: 1.4em; }
+
+  /* ── 검색 ── */
+  .search-row { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+  .search-row input { flex: 1; }
+  .count-pill { font-size: 12px; color: var(--faint); white-space: nowrap; flex-shrink: 0; }
+
+  /* ── 태그 필터 ── */
+  .filter-wrap { margin-bottom: 4px; }
+  .group-block { margin-bottom: 10px; }
+  .group-hdr {
+    display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); padding-bottom: 6px; border-bottom: 1px solid var(--line); margin-bottom: 8px;
+  }
+  .group-hdr .arr { margin-left: auto; font-size: 10px; color: var(--faint); transition: transform .15s; }
+  .group-hdr.closed .arr { transform: rotate(-90deg); }
+  .act-ct {
+    font-size: 10px; background: var(--ink); color: #fff;
+    padding: 1px 5px; border-radius: 4px; margin-left: 2px;
+  }
+  .group-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .group-chips.hidden { display: none; }
+  .tg {
+    font-size: 12px; font-family: "Pretendard", sans-serif;
+    padding: 4px 10px; border-radius: 6px;
+    border: 1px solid var(--line); background: #fff; color: var(--muted);
+    cursor: pointer; user-select: none;
+  }
+  .tg .c { opacity: .5; margin-left: 4px; font-size: 11px; }
+  .tg.inc { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .tg.exc { background: var(--line); border-color: transparent; color: var(--faint); text-decoration: line-through; }
+  .tg.inc .c, .tg.exc .c { opacity: .6; }
+  .filter-footer { display: flex; justify-content: flex-end; margin: 4px 0 14px; }
+  #resetBtn {
+    font-size: 12px; color: var(--faint); background: none; border: none;
+    cursor: pointer; font-family: inherit; padding: 0;
+  }
+  #resetBtn:hover { color: var(--ink); }
+
+  /* ── 카드 — masonry ── */
+  .grid { columns: 2 260px; column-gap: 12px; }
+  @media (max-width: 500px) { .grid { columns: 1; } }
+
+  .item {
+    break-inside: avoid; margin-bottom: 12px;
+    border: 1px solid var(--line); border-radius: var(--r);
+    background: var(--card); overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .thumb { background: #EBEBEB; overflow: hidden; }
+  .thumb img { display: block; width: 100%; height: auto; }
+  .thumb.empty { height: 48px; display: flex; align-items: center; justify-content: center; }
+  .thumb.empty::after { content: "—"; color: var(--line2); font-size: 16px; }
+  .card-body { padding: 11px 12px; display: flex; flex-direction: column; gap: 7px; }
+  .card-name { font-size: 13px; font-weight: 600; line-height: 1.4; word-break: break-word; }
+  .card-note { font-size: 12px; color: var(--muted); white-space: pre-wrap; word-break: break-word; line-height: 1.55; }
+  .card-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tag {
+    font-size: 11px; padding: 2px 6px; border-radius: 4px;
+    background: var(--bg); color: var(--faint); border: 1px solid var(--line);
+  }
+  .card-open { display: flex; justify-content: flex-end; padding: 4px 10px 10px; }
+  .card-open a {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 6px;
+    border: 1px solid var(--line); color: var(--faint); text-decoration: none;
+  }
+  .card-open a:hover { border-color: var(--ink); color: var(--ink); }
+
+  /* ── 기타 ── */
+  .empty-msg { color: var(--faint); font-size: 13px; text-align: center; padding: 40px; }
+  #moreBtn { display: block; margin: 14px auto; }
+  .foot { font-size: 11px; color: var(--faint); text-align: center; margin-top: 36px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>516</h1>
+    <div class="top-right">
+      <span class="tok-dot" id="tokDot"></span>
+      <button id="changeBtn" hidden>변경</button>
+    </div>
+  </header>
+
+  <div class="tok-panel" id="tokPanel">
+    <label>Raindrop 테스트 토큰</label>
+    <div class="tok-row">
+      <input id="tokInput" type="password" placeholder="토큰 붙여넣기" autocomplete="off" spellcheck="false">
+      <button class="primary" id="connectBtn">연결</button>
+    </div>
+    <div id="connErr"></div>
+  </div>
+
+  <div id="collWrap" hidden>
+    <div class="coll-row" id="collChips"></div>
+    <div class="progress" id="prog" hidden><span></span></div>
+    <div class="load-msg" id="loadMsg"></div>
+  </div>
+
+  <div id="mainPanel" hidden>
+    <div class="search-row">
+      <input id="kw" type="search" placeholder="노트 · 제목 검색" autocomplete="off">
+      <span class="count-pill" id="resultCount"></span>
+    </div>
+    <div class="filter-wrap" id="filterWrap"></div>
+    <div class="filter-footer">
+      <button id="resetBtn">필터 초기화</button>
+    </div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <button id="moreBtn" hidden>더 보기</button>
+  <p class="foot">읽기 전용 · 데이터는 레인드롭 그대로</p>
+</div>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 태그 그룹 설정 — 여기만 직접 편집
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const TAG_GROUPS = [
+  {
+    name: "필모",
+    tags: ["작품 짤 + 클립", "메이킹 + 비하인드", "프로모 + 인터뷰", "무대인사 + 팬서비스", "작품 편집영상", "그외"]
+  },
+  {
+    name: "행사 + 이벤트",
+    tags: [
+      // 예: "25.03 팬미팅", "2024 FanCon"
+      // 새 행사 태그 추가 시 여기에 문자열로 넣기
+    ]
+  },
+  {
+    name: "화보 + 광고",
+    tags: [
+      // 예: "ELLE 2024", "하이트진로"
+    ]
+  }
+  // 새 그룹: { name: "이름", tags: ["태그1", "태그2"] }
+  // 위 그룹에 없는 태그는 자동으로 "기타" 섹션에 들어감
+];
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const API = "https://api.raindrop.io/rest/v1";
+const PERPAGE = 50, PAGE_SIZE = 80;
+
+const _m = {};
+const store = {
+  get: k => { try { return localStorage.getItem(k) } catch { return _m[k] ?? null } },
+  set: (k, v) => { try { localStorage.setItem(k, v) } catch { _m[k] = v } },
+  del: k => { try { localStorage.removeItem(k) } catch { delete _m[k] } }
+};
+
+let TOKEN = store.get("rd_token") || "";
+let ALL = [], tagState = {}, kw = "", filtered = [], shown = 0;
+const synCache = {}, inflight = {};
+
+const $ = s => document.querySelector(s);
+const el = (tag, cls, text) => {
+  const e = document.createElement(tag);
+  if(cls) e.className = cls;
+  if(text != null) e.textContent = text;
+  return e;
+};
+const esc = s => String(s ?? "").replace(/[&<>"]/g,
+  m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+
+// ─── API ───
+async function api(path) {
+  let r;
+  try { r = await fetch(API + path, { headers: { Authorization: "Bearer " + TOKEN } }); }
+  catch { throw new Error("네트워크 오류 — http 서버에서 열었는지 확인"); }
+  if(r.status === 401) throw new Error("401 인증 실패 — 토큰 확인");
+  if(r.status === 429) throw new Error("429 rate limit — 잠깐 후 다시");
+  if(!r.ok) throw new Error(r.status + " " + r.statusText);
+  return r.json();
+}
+
+// ─── 연결 ───
+async function connect() {
+  TOKEN = ($("#tokInput").value || "").trim();
+  if(!TOKEN) return;
+  $("#connectBtn").disabled = true;
+  $("#connErr").innerHTML = "";
+  try {
+    const root = await api("/collections");
+    let kids = { items: [] };
+    try { kids = await api("/collections/childrens"); } catch {}
+    store.set("rd_token", TOKEN);
+    $("#tokPanel").hidden = true;
+    $("#tokDot").classList.add("on");
+    $("#changeBtn").hidden = false;
+    $("#collWrap").hidden = false;
+    renderCollections([...(root.items || []), ...(kids.items || [])]);
+  } catch(e) {
+    $("#connErr").innerHTML = `<div class="err-msg">${esc(e.message)}</div>`;
+  } finally {
+    $("#connectBtn").disabled = false;
+  }
+}
+
+function renderCollections(cols) {
+  const host = $("#collChips");
+  host.innerHTML = "";
+  const seen = new Set();
+  [{ _id: 0, title: "All" }, { _id: -1, title: "Unsorted" }, ...cols].forEach(c => {
+    if(seen.has(c._id)) return;
+    seen.add(c._id);
+    const chip = el("button", "coll-chip");
+    chip.innerHTML = esc(c.title) + (c.count != null && c.count !== "" ? `<span class="coll-count">${c.count}</span>` : "");
+    chip.onclick = () => {
+      document.querySelectorAll(".coll-chip").forEach(x => x.classList.remove("sel"));
+      chip.classList.add("sel");
+      loadAll(c._id, c.title);
+    };
+    host.appendChild(chip);
+  });
+}
+
+// ─── 전체 로딩 ───
+async function loadAll(id, title) {
+  ALL = []; tagState = {}; kw = "";
+  const kwEl = $("#kw"); if(kwEl) kwEl.value = "";
+  $("#mainPanel").hidden = true;
+  $("#grid").innerHTML = "";
+  $("#moreBtn").hidden = true;
+  $("#prog").hidden = false;
+  $("#prog").firstElementChild.style.width = "0";
+  $("#loadMsg").textContent = `${title} 불러오는 중…`;
+  try {
+    let page = 0, total = Infinity;
+    while(page * PERPAGE < total) {
+      const d = await api(`/raindrops/${id}?perpage=${PERPAGE}&page=${page}&sort=-created`);
+      total = d.count || 0;
+      ALL.push(...(d.items || []));
+      $("#prog").firstElementChild.style.width = Math.min(100, ALL.length / Math.max(total, 1) * 100) + "%";
+      $("#loadMsg").textContent = `${ALL.length} / ${total}`;
+      if(!d.items || d.items.length < PERPAGE) break;
+      page++;
+    }
+    $("#prog").hidden = true;
+    $("#loadMsg").textContent = "";
+    buildTagFilter();
+    $("#mainPanel").hidden = false;
+    applyFilter();
+  } catch(e) {
+    $("#prog").hidden = true;
+    $("#loadMsg").textContent = "오류: " + e.message;
+  }
+}
+
+// ─── 태그 필터 UI ───
+function buildTagFilter() {
+  const ct = {};
+  ALL.forEach(it => (it.tags || []).forEach(t => ct[t] = (ct[t] || 0) + 1));
+
+  const grouped = new Set();
+  TAG_GROUPS.forEach(g => g.tags.forEach(t => { if(ct[t]) grouped.add(t); }));
+  const others = Object.keys(ct).filter(t => !grouped.has(t)).sort((a, b) => ct[b] - ct[a]);
+
+  const groups = [...TAG_GROUPS];
+  if(others.length) groups.push({ name: "기타", tags: others });
+
+  const host = $("#filterWrap");
+  host.innerHTML = "";
+
+  groups.forEach(g => {
+    const activeTags = g.tags.filter(t => ct[t]);
+    if(!activeTags.length) return;
+
+    const block = el("div", "group-block");
+    const hdr = el("div", "group-hdr");
+    const nameSpan = el("span", null, g.name);
+    const actCt = el("span", "act-ct"); actCt.hidden = true;
+    const arr = el("span", "arr", "▾");
+    hdr.appendChild(nameSpan);
+    hdr.appendChild(actCt);
+    hdr.appendChild(arr);
+
+    let open = true;
+    hdr.onclick = () => {
+      open = !open;
+      hdr.classList.toggle("closed", !open);
+      chips.classList.toggle("hidden", !open);
+    };
+    block.appendChild(hdr);
+
+    const chips = el("div", "group-chips");
+    activeTags.forEach(t => {
+      const b = el("button", "tg");
+      b.innerHTML = esc(t) + `<span class="c">${ct[t]}</span>`;
+      b.dataset.tag = t;
+      b.onclick = () => {
+        const s = tagState[t];
+        if(!s) { tagState[t] = "inc"; b.className = "tg inc"; }
+        else if(s === "inc") { tagState[t] = "exc"; b.className = "tg exc"; }
+        else { delete tagState[t]; b.className = "tg"; }
+        const n = g.tags.filter(x => tagState[x]).length;
+        if(n > 0) { actCt.textContent = n; actCt.hidden = false; }
+        else { actCt.hidden = true; }
+        applyFilter();
+      };
+      chips.appendChild(b);
+    });
+    block.appendChild(chips);
+    host.appendChild(block);
+  });
+}
+
+// ─── 필터 ───
+const noteOf = it => (it.note && it.note.trim()) || "";
+
+function applyFilter() {
+  const inc = Object.keys(tagState).filter(t => tagState[t] === "inc");
+  const exc = Object.keys(tagState).filter(t => tagState[t] === "exc");
+  const q = kw.trim().toLowerCase();
+  filtered = ALL.filter(it => {
+    const tags = it.tags || [];
+    if(inc.length && !inc.every(t => tags.includes(t))) return false;
+    if(exc.some(t => tags.includes(t))) return false;
+    if(q) { const hay = ((it.title || "") + " " + noteOf(it)).toLowerCase(); if(!hay.includes(q)) return false; }
+    return true;
+  });
+  $("#resultCount").textContent = `${filtered.length} / ${ALL.length}`;
+  shown = 0; $("#grid").innerHTML = ""; renderMore();
+}
+
+function renderMore() {
+  const slice = filtered.slice(shown, shown + PAGE_SIZE);
+  const grid = $("#grid");
+  if(shown === 0 && !filtered.length) { grid.innerHTML = '<div class="empty-msg">조건에 맞는 항목 없음</div>'; }
+  slice.forEach(it => grid.appendChild(card(it)));
+  shown += slice.length;
+  $("#moreBtn").hidden = shown >= filtered.length;
+}
+
+// ─── 파싱 ───
+function parseTweet(link) {
+  const s = String(link || "");
+  const idm = s.match(/(?:\/status(?:es)?\/|\/i\/web\/status\/|\/i\/status\/)(\d+)/i);
+  if(!idm) return null;
+  const id = idm[1];
+  const hm = s.match(/(?:twitter|x|vxtwitter|fxtwitter|mobile\.twitter|nitter[^\/]*)\.com\/([^\/\?#]+)\/status/i);
+  let handle = null;
+  if(hm && !/^(i|web|intent|home|messages)$/i.test(hm[1])) handle = hm[1].replace(/^@/, "");
+  return { id, handle, clean: handle ? `https://x.com/${handle}/status/${id}` : `https://x.com/i/status/${id}` };
+}
+
+// ─── Syndication ───
+function synToken(id) {
+  try { return ((Number(id) / 1e15) * Math.PI).toString(36).replace(/(0+|\.)/g, ""); } catch { return "0"; }
+}
+async function fetchSyn(id) {
+  if(synCache[id]) return synCache[id];
+  if(inflight[id]) return inflight[id];
+  inflight[id] = (async () => {
+    try {
+      const r = await fetch(`https://cdn.syndication.twimg.com/tweet-result?id=${id}&token=${synToken(id)}&lang=en`);
+      if(!r.ok) throw 0;
+      const d = await r.json();
+      const cover = d?.mediaDetails?.[0]?.media_url_https || d?.photos?.[0]?.url || "";
+      const v = { name: d?.user?.name || "", handle: d?.user?.screen_name || "", cover };
+      synCache[id] = v; return v;
+    } catch { synCache[id] = { name: "", handle: "", cover: "" }; return synCache[id]; }
+    finally { delete inflight[id]; }
+  })();
+  return inflight[id];
+}
+
+// ─── 카드 ───
+const ICON_LINK = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 11L11 2M11 2H6M11 2V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+function card(it) {
+  const tw = parseTweet(it.link);
+  const c = el("div", "item");
+
+  // 썸네일
+  const thumb = el("div", "thumb empty");
+  const img = el("img"); img.loading = "lazy"; img.alt = "";
+  let coverDone = false, synPromise = null;
+
+  const showEmpty = () => { thumb.classList.add("empty"); if(img.parentNode) img.remove(); };
+  const setImg = u => {
+    if(!u) { showEmpty(); return; }
+    thumb.classList.remove("empty");
+    if(!img.parentNode) thumb.appendChild(img);
+    img.src = u;
+  };
+  const ensureSyn = () => {
+    if(!tw) return Promise.resolve({ name: "", handle: "", cover: "" });
+    if(!synPromise) synPromise = fetchSyn(tw.id);
+    return synPromise;
+  };
+
+  const rawCover = it.cover || (it.media && it.media[0] && it.media[0].link) || "";
+  img.onload = () => { coverDone = true; };
+  img.onerror = () => {
+    if(!coverDone) {
+      img.onerror = null;
+      ensureSyn().then(v => { if(v.cover) setImg(v.cover); else showEmpty(); });
+    }
+  };
+  if(rawCover) setImg(rawCover);
+  c.appendChild(thumb);
+
+  // 본문
+  const body = el("div", "card-body");
+  const nameEl = el("div", "card-name", it.title || "(제목 없음)");
+  body.appendChild(nameEl);
+  const note = noteOf(it);
+  if(note) body.appendChild(el("div", "card-note", note));
+  if(it.tags && it.tags.length) {
+    const tr = el("div", "card-tags");
+    it.tags.forEach(t => tr.appendChild(el("span", "tag", t)));
+    body.appendChild(tr);
+  }
+  c.appendChild(body);
+
+  // 원본 링크
+  const openDiv = el("div", "card-open");
+  const a = el("a"); a.href = tw ? tw.clean : it.link;
+  a.target = "_blank"; a.rel = "noopener"; a.title = "원본 열기";
+  a.innerHTML = ICON_LINK;
+  openDiv.appendChild(a); c.appendChild(openDiv);
+
+  // syndication 보충: 커버 없음 / 핸들 없음 / 닉네임 없음
+  const handleOnly = tw && !/\(/.test(it.title || "");
+  if(tw && (!rawCover || !tw.handle || handleOnly)) {
+    ensureSyn().then(v => {
+      if(!coverDone && !rawCover && v.cover) setImg(v.cover);
+      const handle = tw.handle || v.handle || "";
+      if(handle) a.href = `https://x.com/${handle}/status/${tw.id}`;
+      if(handleOnly && v.name) nameEl.textContent = `${v.name} (${handle})`;
+    });
+  }
+  return c;
+}
+
+// ─── 이벤트 ───
+$("#connectBtn").onclick = connect;
+$("#tokInput").addEventListener("keydown", e => { if(e.key === "Enter") connect(); });
+$("#changeBtn").onclick = () => {
+  $("#tokPanel").hidden = false;
+  $("#tokInput").value = TOKEN;
+  setTimeout(() => $("#tokInput").focus(), 50);
+};
+let kwTimer;
+$("#kw").addEventListener("input", e => {
+  kw = e.target.value; clearTimeout(kwTimer);
+  kwTimer = setTimeout(applyFilter, 120);
+});
+$("#resetBtn").onclick = () => {
+  tagState = {}; kw = "";
+  const kwEl = $("#kw"); if(kwEl) kwEl.value = "";
+  document.querySelectorAll(".tg").forEach(b => b.className = "tg");
+  document.querySelectorAll(".act-ct").forEach(s => { s.hidden = true; });
+  applyFilter();
+};
+$("#moreBtn").onclick = renderMore;
+
+if(TOKEN) { $("#tokInput").value = TOKEN; connect(); }
+</script>
+</body>
+</html>
