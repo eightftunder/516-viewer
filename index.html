@@ -9,156 +9,186 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
-  :root {
-    --bg: #F5F5F3;
-    --card: #FFFFFF;
-    --ink: #141414;
-    --muted: #606060;
-    --faint: #A0A0A0;
-    --line: #E2E2E2;
-    --line2: #C8C8C8;
-    --r: 9px;
-  }
-  *, *::before, *::after { box-sizing: border-box; }
-  html, body { margin: 0; }
-  body {
-    background: var(--bg); color: var(--ink);
-    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 14px; line-height: 1.6;
-    padding: max(16px, env(safe-area-inset-top)) 16px 60px;
-    -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 880px; margin: 0 auto; }
+:root{
+  --bg:#F5F5F3;--card:#FFF;--ink:#141414;
+  --muted:#5A5A5A;--faint:#909090;
+  --line:#E2E2E2;--line2:#C8C8C8;--r:9px;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:"Pretendard",-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:14px;line-height:1.6;
+  padding:max(16px,env(safe-area-inset-top)) 16px 60px;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:880px;margin:0 auto}
 
-  /* ── 헤더 ── */
-  .top {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 0 18px;
-  }
-  .top h1 {
-    font-family: "Outfit", sans-serif;
-    font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin: 0;
-  }
-  .top-right { display: flex; align-items: center; gap: 9px; }
-  .tok-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--line2); flex-shrink: 0; }
-  .tok-dot.on { background: var(--ink); }
-  #changeBtn {
-    font-size: 12px; color: var(--faint); background: none; border: none;
-    cursor: pointer; padding: 0; font-family: inherit; text-decoration: underline;
-  }
-  #changeBtn:hover { color: var(--ink); }
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;padding:8px 0 18px}
+.top h1{font-family:"Outfit",sans-serif;font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0}
+.top-right{display:flex;align-items:center;gap:9px}
+.tok-dot{width:7px;height:7px;border-radius:50%;background:var(--line2);flex-shrink:0}
+.tok-dot.on{background:var(--ink)}
+.text-btn{font-size:12px;color:var(--faint);background:none;border:none;cursor:pointer;padding:0;font-family:inherit;text-decoration:underline}
+.text-btn:hover{color:var(--ink)}
 
-  /* ── 토큰 패널 ── */
-  .tok-panel {
-    background: var(--card); border: 1px solid var(--line); border-radius: var(--r);
-    padding: 14px; margin-bottom: 18px;
-  }
-  .tok-panel label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 7px; }
-  .tok-row { display: flex; gap: 8px; }
-  .tok-row input { flex: 1; }
-  .err-msg { font-size: 12px; color: #B94040; margin-top: 8px; }
+/* panels */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:16px}
+.panel label{display:block;font-size:12px;color:var(--muted);margin-bottom:7px}
+.tok-row{display:flex;gap:8px}
+.tok-row input{flex:1}
+.err-msg{font-size:12px;color:#B94040;margin-top:8px}
 
-  /* ── 공용 인풋/버튼 ── */
-  input {
-    font-family: "Pretendard", sans-serif; font-size: 14px;
-    padding: 9px 11px; border: 1px solid var(--line); border-radius: var(--r);
-    background: #fff; color: var(--ink); width: 100%; outline: none;
-  }
-  input:focus { border-color: var(--ink); }
-  button {
-    font-family: "Pretendard", sans-serif; font-size: 13px; font-weight: 600;
-    cursor: pointer; padding: 9px 14px; border-radius: var(--r);
-    border: 1px solid var(--line); background: #fff; color: var(--ink);
-    white-space: nowrap;
-  }
-  button.primary { background: var(--ink); border-color: var(--ink); color: #fff; }
-  button:disabled { opacity: .4; cursor: default; }
+/* inputs/buttons */
+input,select{
+  font-family:"Pretendard",sans-serif;font-size:14px;
+  padding:9px 11px;border:1px solid var(--line);border-radius:var(--r);
+  background:#fff;color:var(--ink);width:100%;outline:none;
+}
+input:focus,select:focus{border-color:var(--ink)}
+select{cursor:pointer}
+button{
+  font-family:"Pretendard",sans-serif;font-size:13px;font-weight:600;
+  cursor:pointer;padding:9px 14px;border-radius:var(--r);
+  border:1px solid var(--line);background:#fff;color:var(--ink);white-space:nowrap;
+}
+button.primary{background:var(--ink);border-color:var(--ink);color:#fff}
+button.sm{padding:5px 10px;font-size:12px}
+button.danger{border-color:#C44;color:#C44}
+button.danger:hover{background:#C44;color:#fff}
+button:disabled{opacity:.4;cursor:default}
 
-  /* ── 컬렉션 ── */
-  .coll-row { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 14px; }
-  .coll-chip {
-    font-size: 13px; font-family: "Pretendard", sans-serif; font-weight: 500;
-    padding: 6px 13px; border-radius: 999px;
-    border: 1px solid var(--line); background: #fff; color: var(--muted); cursor: pointer;
-  }
-  .coll-chip.sel { background: var(--ink); border-color: var(--ink); color: #fff; }
-  .coll-count { opacity: .5; margin-left: 4px; font-size: 11px; }
-  .progress { height: 2px; background: var(--line); border-radius: 2px; overflow: hidden; margin: 8px 0 4px; }
-  .progress > span { display: block; height: 100%; background: var(--ink); width: 0; transition: width .2s; }
-  .load-msg { font-size: 12px; color: var(--faint); min-height: 1.4em; }
+/* collections */
+.coll-wrap{margin-bottom:14px}
+.coll-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:6px}
+.coll-chip{
+  font-size:13px;font-family:"Pretendard",sans-serif;font-weight:500;
+  padding:6px 13px;border-radius:999px;
+  border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;
+}
+.coll-chip.sel{background:var(--ink);border-color:var(--ink);color:#fff}
+.coll-count{opacity:.5;margin-left:4px;font-size:11px}
+.progress{height:2px;background:var(--line);border-radius:2px;overflow:hidden;margin:6px 0 3px}
+.progress>span{display:block;height:100%;background:var(--ink);width:0;transition:width .2s}
+.load-row{display:flex;align-items:center;gap:14px}
+.load-msg{font-size:12px;color:var(--faint);min-height:1.4em;flex:1}
 
-  /* ── 검색 ── */
-  .search-row { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
-  .search-row input { flex: 1; }
-  .count-pill { font-size: 12px; color: var(--faint); white-space: nowrap; flex-shrink: 0; }
+/* search */
+.search-row{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.search-row input{flex:1}
+.count-pill{font-size:12px;color:var(--faint);white-space:nowrap;flex-shrink:0}
 
-  /* ── 태그 필터 ── */
-  .filter-wrap { margin-bottom: 4px; }
-  .group-block { margin-bottom: 10px; }
-  .group-hdr {
-    display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;
-    font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
-    color: var(--muted); padding-bottom: 6px; border-bottom: 1px solid var(--line); margin-bottom: 8px;
-  }
-  .group-hdr .arr { margin-left: auto; font-size: 10px; color: var(--faint); transition: transform .15s; }
-  .group-hdr.closed .arr { transform: rotate(-90deg); }
-  .act-ct {
-    font-size: 10px; background: var(--ink); color: #fff;
-    padding: 1px 5px; border-radius: 4px; margin-left: 2px;
-  }
-  .group-chips { display: flex; gap: 6px; flex-wrap: wrap; }
-  .group-chips.hidden { display: none; }
-  .tg {
-    font-size: 12px; font-family: "Pretendard", sans-serif;
-    padding: 4px 10px; border-radius: 6px;
-    border: 1px solid var(--line); background: #fff; color: var(--muted);
-    cursor: pointer; user-select: none;
-  }
-  .tg .c { opacity: .5; margin-left: 4px; font-size: 11px; }
-  .tg.inc { background: var(--ink); border-color: var(--ink); color: #fff; }
-  .tg.exc { background: var(--line); border-color: transparent; color: var(--faint); text-decoration: line-through; }
-  .tg.inc .c, .tg.exc .c { opacity: .6; }
-  .filter-footer { display: flex; justify-content: flex-end; margin: 4px 0 14px; }
-  #resetBtn {
-    font-size: 12px; color: var(--faint); background: none; border: none;
-    cursor: pointer; font-family: inherit; padding: 0;
-  }
-  #resetBtn:hover { color: var(--ink); }
+/* filter — 2-level */
+.filter-bar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.cat-chip{
+  font-size:12px;font-family:"Pretendard",sans-serif;font-weight:600;
+  padding:5px 13px;border-radius:999px;
+  border:1px solid var(--line2);background:#fff;color:var(--muted);cursor:pointer;
+}
+.cat-chip.sel{background:var(--ink);border-color:var(--ink);color:#fff}
+.cat-chip.has-active{border-color:var(--ink);color:var(--ink)}
+.cat-chip.sel.has-active{background:var(--ink);color:#fff}
+.edit-btn{margin-left:auto;font-size:12px;color:var(--faint);background:none;border:none;cursor:pointer;font-family:inherit}
+.edit-btn:hover{color:var(--ink)}
 
-  /* ── 카드 — masonry ── */
-  .grid { columns: 2 260px; column-gap: 12px; }
-  @media (max-width: 500px) { .grid { columns: 1; } }
+.tag-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.tg{
+  font-size:12px;font-family:"Pretendard",sans-serif;
+  padding:4px 10px;border-radius:6px;
+  border:1px solid var(--line);background:#fff;color:var(--muted);
+  cursor:pointer;user-select:none;
+}
+.tg .c{opacity:.55;margin-left:4px;font-size:11px}
+.tg.inc{background:var(--ink);border-color:var(--ink);color:#fff}
+.tg.exc{background:var(--line);border-color:transparent;color:var(--faint);text-decoration:line-through}
 
-  .item {
-    break-inside: avoid; margin-bottom: 12px;
-    border: 1px solid var(--line); border-radius: var(--r);
-    background: var(--card); overflow: hidden;
-    display: flex; flex-direction: column;
-  }
-  .thumb { background: #EBEBEB; overflow: hidden; }
-  .thumb img { display: block; width: 100%; height: auto; }
-  .thumb.empty { height: 48px; display: flex; align-items: center; justify-content: center; }
-  .thumb.empty::after { content: "—"; color: var(--line2); font-size: 16px; }
-  .card-body { padding: 11px 12px; display: flex; flex-direction: column; gap: 7px; }
-  .card-name { font-size: 13px; font-weight: 600; line-height: 1.4; word-break: break-word; }
-  .card-note { font-size: 12px; color: var(--muted); white-space: pre-wrap; word-break: break-word; line-height: 1.55; }
-  .card-tags { display: flex; gap: 4px; flex-wrap: wrap; }
-  .tag {
-    font-size: 11px; padding: 2px 6px; border-radius: 4px;
-    background: var(--bg); color: var(--faint); border: 1px solid var(--line);
-  }
-  .card-open { display: flex; justify-content: flex-end; padding: 4px 10px 10px; }
-  .card-open a {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 28px; height: 28px; border-radius: 6px;
-    border: 1px solid var(--line); color: var(--faint); text-decoration: none;
-  }
-  .card-open a:hover { border-color: var(--ink); color: var(--ink); }
+/* active filter summary */
+.active-filters{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.af-pill{
+  font-size:11px;padding:3px 9px;border-radius:999px;
+  display:inline-flex;align-items:center;gap:5px;cursor:pointer;
+}
+.af-pill.inc{background:var(--ink);color:#fff}
+.af-pill.exc{background:var(--line);color:var(--muted);text-decoration:line-through}
+.af-x{opacity:.6;font-size:10px}
 
-  /* ── 기타 ── */
-  .empty-msg { color: var(--faint); font-size: 13px; text-align: center; padding: 40px; }
-  #moreBtn { display: block; margin: 14px auto; }
-  .foot { font-size: 11px; color: var(--faint); text-align: center; margin-top: 36px; }
+.filter-footer{display:flex;justify-content:flex-end;margin:2px 0 14px}
+
+/* editor */
+.editor-wrap{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:16px}
+.editor-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.editor-hdr h2{font-size:13px;font-weight:700;margin:0}
+.gh-row{display:flex;gap:8px;margin-bottom:6px}
+.gh-row input{flex:1;font-size:13px;padding:7px 10px}
+.gh-note{font-size:11px;color:var(--faint);margin-bottom:14px}
+
+.ed-group{border:1px solid var(--line);border-radius:8px;margin-bottom:10px;overflow:hidden}
+.ed-group-hdr{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--line)}
+.ed-group-name{
+  font-size:13px;font-weight:600;flex:1;border:none;background:transparent;
+  color:var(--ink);outline:none;padding:2px 0;font-family:"Pretendard",sans-serif;
+  border-bottom:1px solid transparent;
+}
+.ed-group-name:focus{border-bottom-color:var(--ink)}
+.ed-tags{padding:10px 12px;display:flex;gap:6px;flex-wrap:wrap;min-height:42px}
+.ed-tag{
+  font-size:12px;padding:3px 8px 3px 10px;border-radius:5px;
+  border:1px solid var(--line);background:#fff;color:var(--muted);
+  display:inline-flex;align-items:center;gap:5px;
+}
+.ed-rm{font-size:13px;cursor:pointer;color:var(--faint);background:none;border:none;padding:0;line-height:1}
+.ed-rm:hover{color:var(--ink)}
+.ed-empty{font-size:12px;color:var(--faint);padding:2px 0}
+
+.unassigned-section{margin-top:10px}
+.unassigned-hdr{
+  font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--faint);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--line);
+}
+.un-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.un-name{font-size:12px;color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.un-ct{font-size:11px;color:var(--faint);flex-shrink:0}
+.un-sel{flex-shrink:0;width:160px;font-size:12px;padding:5px 8px}
+
+.save-row{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+.save-msg{font-size:12px;flex:1}
+.save-msg.ok{color:#1E7A4B}
+.save-msg.err{color:#B94040}
+
+/* cards */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:12px;
+  align-items:start;
+}
+@media(max-width:500px){.grid{grid-template-columns:1fr}}
+
+.item{border:1px solid var(--line);border-radius:var(--r);background:var(--card);overflow:hidden;display:flex;flex-direction:column}
+.thumb{background:#EBEBEB;overflow:hidden}
+.thumb img{display:block;width:100%;height:auto}
+.thumb.empty{height:48px;display:flex;align-items:center;justify-content:center}
+.thumb.empty::after{content:"—";color:var(--line2);font-size:16px}
+.card-body{padding:11px 12px;display:flex;flex-direction:column;gap:7px}
+.card-name{font-size:13px;font-weight:600;line-height:1.4;word-break:break-word}
+.card-note{font-size:12px;color:var(--muted);white-space:pre-wrap;word-break:break-word;line-height:1.55}
+.card-tags{display:flex;gap:4px;flex-wrap:wrap}
+.tag{font-size:11px;padding:2px 6px;border-radius:4px;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.card-open{display:flex;justify-content:flex-end;padding:4px 10px 10px}
+.card-open a{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;border-radius:6px;
+  border:1px solid var(--line);color:var(--faint);text-decoration:none;
+}
+.card-open a:hover{border-color:var(--ink);color:var(--ink)}
+
+/* misc */
+.empty-msg{color:var(--faint);font-size:13px;text-align:center;padding:40px}
+#moreBtn{display:block;margin:14px auto}
+.foot{font-size:11px;color:var(--faint);text-align:center;margin-top:36px}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
@@ -168,11 +198,11 @@
     <h1>516</h1>
     <div class="top-right">
       <span class="tok-dot" id="tokDot"></span>
-      <button id="changeBtn" hidden>변경</button>
+      <button class="text-btn" id="changeBtn" hidden>변경</button>
     </div>
   </header>
 
-  <div class="tok-panel" id="tokPanel">
+  <div class="panel" id="tokPanel">
     <label>Raindrop 테스트 토큰</label>
     <div class="tok-row">
       <input id="tokInput" type="password" placeholder="토큰 붙여넣기" autocomplete="off" spellcheck="false">
@@ -181,20 +211,47 @@
     <div id="connErr"></div>
   </div>
 
-  <div id="collWrap" hidden>
+  <div class="coll-wrap hidden" id="collWrap">
     <div class="coll-row" id="collChips"></div>
-    <div class="progress" id="prog" hidden><span></span></div>
-    <div class="load-msg" id="loadMsg"></div>
+    <div class="progress hidden" id="prog"><span></span></div>
+    <div class="load-row">
+      <div class="load-msg" id="loadMsg"></div>
+      <button class="text-btn hidden" id="refreshBtn">↺ 새로고침</button>
+    </div>
   </div>
 
-  <div id="mainPanel" hidden>
+  <div class="hidden" id="mainPanel">
     <div class="search-row">
       <input id="kw" type="search" placeholder="노트 · 제목 검색" autocomplete="off">
       <span class="count-pill" id="resultCount"></span>
     </div>
-    <div class="filter-wrap" id="filterWrap"></div>
+    <div class="filter-bar" id="filterBar">
+      <button class="edit-btn" id="editBtn">그룹 편집</button>
+    </div>
+    <div class="tag-row" id="tagRow"></div>
+    <div class="active-filters" id="activeFilters"></div>
     <div class="filter-footer">
-      <button id="resetBtn">필터 초기화</button>
+      <button class="text-btn" id="resetBtn">필터 초기화</button>
+    </div>
+  </div>
+
+  <div class="editor-wrap hidden" id="editorWrap">
+    <div class="editor-hdr">
+      <h2>태그 그룹 편집</h2>
+      <button class="sm" id="closeEditorBtn">닫기</button>
+    </div>
+    <div class="gh-row">
+      <input id="ghInput" type="password" placeholder="GitHub Personal Access Token (저장에 필요, repo 권한)" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="gh-note">토큰은 이 브라우저에만 저장돼. 읽기는 토큰 없이도 됨.</div>
+    <div id="edGroups"></div>
+    <div id="unassignedSection"></div>
+    <div style="margin-top:10px">
+      <button class="sm" id="addGroupBtn">+ 새 그룹</button>
+    </div>
+    <div class="save-row">
+      <button class="primary" id="saveBtn">GitHub에 저장</button>
+      <span class="save-msg" id="saveMsg"></span>
     </div>
   </div>
 
@@ -204,350 +261,436 @@
 </div>
 
 <script>
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 태그 그룹 설정 — 여기만 직접 편집
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const TAG_GROUPS = [
-  {
-    name: "필모",
-    tags: ["작품 짤 + 클립", "메이킹 + 비하인드", "프로모 + 인터뷰", "무대인사 + 팬서비스", "작품 편집영상", "그외"]
-  },
-  {
-    name: "행사 + 이벤트",
-    tags: [
-      // 예: "25.03 팬미팅", "2024 FanCon"
-      // 새 행사 태그 추가 시 여기에 문자열로 넣기
-    ]
-  },
-  {
-    name: "화보 + 광고",
-    tags: [
-      // 예: "ELLE 2024", "하이트진로"
-    ]
-  }
-  // 새 그룹: { name: "이름", tags: ["태그1", "태그2"] }
-  // 위 그룹에 없는 태그는 자동으로 "기타" 섹션에 들어감
-];
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const REPO     = "eightftunder/516-viewer";
+const CFG_PATH = "tag-groups.json";
+const GH_API   = `https://api.github.com/repos/${REPO}/contents/${CFG_PATH}`;
+const RD_API   = "https://api.raindrop.io/rest/v1";
+const PERPAGE  = 50, PAGE_SIZE = 80;
 
-const API = "https://api.raindrop.io/rest/v1";
-const PERPAGE = 50, PAGE_SIZE = 80;
-
+// ── storage ──
 const _m = {};
 const store = {
   get: k => { try { return localStorage.getItem(k) } catch { return _m[k] ?? null } },
-  set: (k, v) => { try { localStorage.setItem(k, v) } catch { _m[k] = v } },
-  del: k => { try { localStorage.removeItem(k) } catch { delete _m[k] } }
+  set: (k,v) => { try { localStorage.setItem(k,v) } catch { _m[k]=v } },
 };
 
-let TOKEN = store.get("rd_token") || "";
-let ALL = [], tagState = {}, kw = "", filtered = [], shown = 0;
-const synCache = {}, inflight = {};
+let TOKEN    = store.get("rd_token") || "";
+let GH_TOKEN = store.get("gh_token") || "";
+
+let ALL = [], filtered = [], shown = 0;
+let curCollId = null, curCollTitle = "";
+let tagGroups = [], configSha = null;
+let tagState = {}, kw = "", activeCat = null;
+const collCache = {}, synCache = {}, inflight = {};
 
 const $ = s => document.querySelector(s);
-const el = (tag, cls, text) => {
-  const e = document.createElement(tag);
-  if(cls) e.className = cls;
-  if(text != null) e.textContent = text;
-  return e;
-};
-const esc = s => String(s ?? "").replace(/[&<>"]/g,
-  m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const el = (t,c,x) => { const e=document.createElement(t); if(c)e.className=c; if(x!=null)e.textContent=x; return e };
+const esc = s => String(s??"").replace(/[&<>"]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const b64enc = s => btoa(unescape(encodeURIComponent(s)));
+const b64dec = s => decodeURIComponent(escape(atob(s.replace(/\s/g,""))));
 
-// ─── API ───
-async function api(path) {
+// ── GitHub config ──
+async function loadConfig() {
+  try {
+    const hdrs = { Accept:"application/vnd.github.v3+json" };
+    if(GH_TOKEN) hdrs.Authorization = "Bearer "+GH_TOKEN;
+    const r = await fetch(GH_API, { headers:hdrs });
+    if(r.status===404) { tagGroups=[]; return; }
+    if(!r.ok) throw 0;
+    const d = await r.json();
+    configSha = d.sha;
+    tagGroups = JSON.parse(b64dec(d.content));
+  } catch { tagGroups = []; }
+}
+
+async function saveConfig() {
+  const tok = ($("#ghInput").value||"").trim() || GH_TOKEN;
+  if(!tok) throw new Error("GitHub 토큰이 필요해");
+  GH_TOKEN = tok; store.set("gh_token", GH_TOKEN);
+  const body = { message:"update tag groups", content:b64enc(JSON.stringify(tagGroups,null,2)) };
+  if(configSha) body.sha = configSha;
+  const r = await fetch(GH_API, {
+    method:"PUT",
+    headers:{ Authorization:"Bearer "+GH_TOKEN, "Content-Type":"application/json", Accept:"application/vnd.github.v3+json" },
+    body: JSON.stringify(body)
+  });
+  if(!r.ok) { const d=await r.json().catch(()=>({})); throw new Error(d.message||"저장 실패"); }
+  configSha = (await r.json()).content.sha;
+}
+
+// ── Raindrop API ──
+async function rdApi(path) {
   let r;
-  try { r = await fetch(API + path, { headers: { Authorization: "Bearer " + TOKEN } }); }
-  catch { throw new Error("네트워크 오류 — http 서버에서 열었는지 확인"); }
-  if(r.status === 401) throw new Error("401 인증 실패 — 토큰 확인");
-  if(r.status === 429) throw new Error("429 rate limit — 잠깐 후 다시");
-  if(!r.ok) throw new Error(r.status + " " + r.statusText);
+  try { r = await fetch(RD_API+path, { headers:{ Authorization:"Bearer "+TOKEN } }); }
+  catch { throw new Error("네트워크 오류"); }
+  if(r.status===401) throw new Error("401 토큰 오류");
+  if(r.status===429) throw new Error("429 rate limit");
+  if(!r.ok) throw new Error(r.status+" "+r.statusText);
   return r.json();
 }
 
-// ─── 연결 ───
+// ── 연결 ──
 async function connect() {
-  TOKEN = ($("#tokInput").value || "").trim();
+  TOKEN = ($("#tokInput").value||"").trim();
   if(!TOKEN) return;
   $("#connectBtn").disabled = true;
   $("#connErr").innerHTML = "";
   try {
-    const root = await api("/collections");
-    let kids = { items: [] };
-    try { kids = await api("/collections/childrens"); } catch {}
+    const root = await rdApi("/collections");
+    let kids = {items:[]};
+    try { kids = await rdApi("/collections/childrens"); } catch {}
     store.set("rd_token", TOKEN);
     $("#tokPanel").hidden = true;
     $("#tokDot").classList.add("on");
     $("#changeBtn").hidden = false;
-    $("#collWrap").hidden = false;
-    renderCollections([...(root.items || []), ...(kids.items || [])]);
+    $("#collWrap").classList.remove("hidden");
+    await loadConfig();
+    renderCollections([...(root.items||[]),...(kids.items||[])]);
   } catch(e) {
     $("#connErr").innerHTML = `<div class="err-msg">${esc(e.message)}</div>`;
-  } finally {
-    $("#connectBtn").disabled = false;
-  }
+  } finally { $("#connectBtn").disabled = false; }
 }
 
 function renderCollections(cols) {
-  const host = $("#collChips");
-  host.innerHTML = "";
+  const host = $("#collChips"); host.innerHTML = "";
   const seen = new Set();
-  [{ _id: 0, title: "All" }, { _id: -1, title: "Unsorted" }, ...cols].forEach(c => {
-    if(seen.has(c._id)) return;
-    seen.add(c._id);
-    const chip = el("button", "coll-chip");
-    chip.innerHTML = esc(c.title) + (c.count != null && c.count !== "" ? `<span class="coll-count">${c.count}</span>` : "");
+  [{_id:0,title:"All"},{_id:-1,title:"Unsorted"},...cols].forEach(c => {
+    if(seen.has(c._id)) return; seen.add(c._id);
+    const chip = el("button","coll-chip");
+    chip.innerHTML = esc(c.title) + (c.count!=null&&c.count!==""?`<span class="coll-count">${c.count}</span>`:"");
+    chip.dataset.id = c._id;
     chip.onclick = () => {
-      document.querySelectorAll(".coll-chip").forEach(x => x.classList.remove("sel"));
+      document.querySelectorAll(".coll-chip").forEach(x=>x.classList.remove("sel"));
       chip.classList.add("sel");
-      loadAll(c._id, c.title);
+      loadAll(c._id, c.title, false);
     };
     host.appendChild(chip);
   });
 }
 
-// ─── 전체 로딩 ───
-async function loadAll(id, title) {
-  ALL = []; tagState = {}; kw = "";
-  const kwEl = $("#kw"); if(kwEl) kwEl.value = "";
-  $("#mainPanel").hidden = true;
-  $("#grid").innerHTML = "";
-  $("#moreBtn").hidden = true;
-  $("#prog").hidden = false;
-  $("#prog").firstElementChild.style.width = "0";
-  $("#loadMsg").textContent = `${title} 불러오는 중…`;
+// ── 전체 로딩 (캐시) ──
+async function loadAll(id, title, forceRefresh) {
+  const isSwitch = id !== curCollId;
+  curCollId = id; curCollTitle = title;
+  if(isSwitch || forceRefresh) { tagState={}; kw=""; activeCat=null; const k=$("#kw"); if(k) k.value=""; }
+  $("#editorWrap").classList.add("hidden");
+
+  if(!forceRefresh && collCache[id]) {
+    ALL = collCache[id];
+    $("#loadMsg").textContent = "";
+    $("#refreshBtn").classList.remove("hidden");
+    buildFilter();
+    $("#mainPanel").classList.remove("hidden");
+    applyFilter();
+    return;
+  }
+
+  ALL=[]; filtered=[]; shown=0;
+  $("#mainPanel").classList.add("hidden");
+  $("#grid").innerHTML="";
+  $("#moreBtn").hidden=true;
+  $("#refreshBtn").classList.add("hidden");
+  $("#prog").classList.remove("hidden");
+  $("#prog").firstElementChild.style.width="0";
+  $("#loadMsg").textContent=`${title} 불러오는 중…`;
+
   try {
-    let page = 0, total = Infinity;
-    while(page * PERPAGE < total) {
-      const d = await api(`/raindrops/${id}?perpage=${PERPAGE}&page=${page}&sort=-created`);
-      total = d.count || 0;
-      ALL.push(...(d.items || []));
-      $("#prog").firstElementChild.style.width = Math.min(100, ALL.length / Math.max(total, 1) * 100) + "%";
+    let page=0, total=Infinity;
+    while(page*PERPAGE<total) {
+      const d = await rdApi(`/raindrops/${id}?perpage=${PERPAGE}&page=${page}&sort=-created`);
+      total = d.count||0;
+      ALL.push(...(d.items||[]));
+      $("#prog").firstElementChild.style.width = Math.min(100,ALL.length/Math.max(total,1)*100)+"%";
       $("#loadMsg").textContent = `${ALL.length} / ${total}`;
-      if(!d.items || d.items.length < PERPAGE) break;
+      if(!d.items||d.items.length<PERPAGE) break;
       page++;
     }
-    $("#prog").hidden = true;
-    $("#loadMsg").textContent = "";
-    buildTagFilter();
-    $("#mainPanel").hidden = false;
+    collCache[id] = ALL;
+    $("#prog").classList.add("hidden");
+    $("#loadMsg").textContent="";
+    $("#refreshBtn").classList.remove("hidden");
+    buildFilter();
+    $("#mainPanel").classList.remove("hidden");
     applyFilter();
   } catch(e) {
-    $("#prog").hidden = true;
-    $("#loadMsg").textContent = "오류: " + e.message;
+    $("#prog").classList.add("hidden");
+    $("#loadMsg").textContent="오류: "+e.message;
   }
 }
 
-// ─── 태그 필터 UI ───
-function buildTagFilter() {
-  const ct = {};
-  ALL.forEach(it => (it.tags || []).forEach(t => ct[t] = (ct[t] || 0) + 1));
+// ── 태그 유틸 ──
+function tagCounts() {
+  const ct={};
+  ALL.forEach(it=>(it.tags||[]).forEach(t=>ct[t]=(ct[t]||0)+1));
+  return ct;
+}
+function getGroupedData() {
+  const ct = tagCounts();
+  const assigned = new Set(tagGroups.flatMap(g=>g.tags));
+  const others = Object.keys(ct).filter(t=>!assigned.has(t)).sort((a,b)=>ct[b]-ct[a]);
+  const groups = tagGroups
+    .map(g=>({name:g.name, tags:g.tags.filter(t=>ct[t]), isConfig:true}))
+    .filter(g=>g.tags.length);
+  if(others.length) groups.push({name:"기타", tags:others});
+  return {groups, ct};
+}
 
-  const grouped = new Set();
-  TAG_GROUPS.forEach(g => g.tags.forEach(t => { if(ct[t]) grouped.add(t); }));
-  const others = Object.keys(ct).filter(t => !grouped.has(t)).sort((a, b) => ct[b] - ct[a]);
-
-  const groups = [...TAG_GROUPS];
-  if(others.length) groups.push({ name: "기타", tags: others });
-
-  const host = $("#filterWrap");
-  host.innerHTML = "";
-
+// ── 필터 UI ──
+function buildFilter() {
+  const bar = $("#filterBar");
+  [...bar.children].forEach(c=>{ if(c.id!=="editBtn") c.remove(); });
+  const {groups} = getGroupedData();
   groups.forEach(g => {
-    const activeTags = g.tags.filter(t => ct[t]);
-    if(!activeTags.length) return;
-
-    const block = el("div", "group-block");
-    const hdr = el("div", "group-hdr");
-    const nameSpan = el("span", null, g.name);
-    const actCt = el("span", "act-ct"); actCt.hidden = true;
-    const arr = el("span", "arr", "▾");
-    hdr.appendChild(nameSpan);
-    hdr.appendChild(actCt);
-    hdr.appendChild(arr);
-
-    let open = true;
-    hdr.onclick = () => {
-      open = !open;
-      hdr.classList.toggle("closed", !open);
-      chips.classList.toggle("hidden", !open);
+    const chip = el("button","cat-chip");
+    chip.textContent = g.name;
+    const hasActive = g.tags.some(t=>tagState[t]);
+    if(hasActive) chip.classList.add("has-active");
+    if(activeCat===g.name) chip.classList.add("sel");
+    chip.onclick = () => {
+      activeCat = activeCat===g.name ? null : g.name;
+      buildFilter();
     };
-    block.appendChild(hdr);
+    bar.insertBefore(chip, $("#editBtn"));
+  });
+  renderTagRow();
+  renderActiveFilters();
+}
 
-    const chips = el("div", "group-chips");
-    activeTags.forEach(t => {
-      const b = el("button", "tg");
-      b.innerHTML = esc(t) + `<span class="c">${ct[t]}</span>`;
-      b.dataset.tag = t;
-      b.onclick = () => {
-        const s = tagState[t];
-        if(!s) { tagState[t] = "inc"; b.className = "tg inc"; }
-        else if(s === "inc") { tagState[t] = "exc"; b.className = "tg exc"; }
-        else { delete tagState[t]; b.className = "tg"; }
-        const n = g.tags.filter(x => tagState[x]).length;
-        if(n > 0) { actCt.textContent = n; actCt.hidden = false; }
-        else { actCt.hidden = true; }
-        applyFilter();
-      };
-      chips.appendChild(b);
-    });
-    block.appendChild(chips);
-    host.appendChild(block);
+function renderTagRow() {
+  const host = $("#tagRow"); host.innerHTML="";
+  if(!activeCat) return;
+  const {groups,ct} = getGroupedData();
+  const g = groups.find(x=>x.name===activeCat);
+  if(!g) return;
+  g.tags.forEach(t => {
+    const b = el("button","tg");
+    b.innerHTML = esc(t)+`<span class="c">${ct[t]||0}</span>`;
+    const s=tagState[t];
+    if(s==="inc") b.classList.add("inc");
+    else if(s==="exc") b.classList.add("exc");
+    b.onclick = () => {
+      const s=tagState[t];
+      if(!s) tagState[t]="inc";
+      else if(s==="inc") tagState[t]="exc";
+      else delete tagState[t];
+      buildFilter(); applyFilter();
+    };
+    host.appendChild(b);
   });
 }
 
-// ─── 필터 ───
-const noteOf = it => (it.note && it.note.trim()) || "";
+function renderActiveFilters() {
+  const host = $("#activeFilters"); host.innerHTML="";
+  Object.entries(tagState).forEach(([t,s]) => {
+    const p = el("div","af-pill "+s);
+    p.innerHTML = `<span>${esc(t)}</span><span class="af-x">✕</span>`;
+    p.onclick = () => { delete tagState[t]; buildFilter(); applyFilter(); };
+    host.appendChild(p);
+  });
+}
+
+// ── 필터 로직 ──
+const noteOf = it => (it.note&&it.note.trim())||"";
 
 function applyFilter() {
-  const inc = Object.keys(tagState).filter(t => tagState[t] === "inc");
-  const exc = Object.keys(tagState).filter(t => tagState[t] === "exc");
-  const q = kw.trim().toLowerCase();
-  filtered = ALL.filter(it => {
-    const tags = it.tags || [];
-    if(inc.length && !inc.every(t => tags.includes(t))) return false;
-    if(exc.some(t => tags.includes(t))) return false;
-    if(q) { const hay = ((it.title || "") + " " + noteOf(it)).toLowerCase(); if(!hay.includes(q)) return false; }
+  const inc=Object.keys(tagState).filter(t=>tagState[t]==="inc");
+  const exc=Object.keys(tagState).filter(t=>tagState[t]==="exc");
+  const q=kw.trim().toLowerCase();
+  filtered=ALL.filter(it=>{
+    const tags=it.tags||[];
+    if(inc.length&&!inc.every(t=>tags.includes(t))) return false;
+    if(exc.some(t=>tags.includes(t))) return false;
+    if(q){ const hay=((it.title||"")+" "+noteOf(it)).toLowerCase(); if(!hay.includes(q)) return false; }
     return true;
   });
-  $("#resultCount").textContent = `${filtered.length} / ${ALL.length}`;
-  shown = 0; $("#grid").innerHTML = ""; renderMore();
+  $("#resultCount").textContent=`${filtered.length} / ${ALL.length}`;
+  shown=0; $("#grid").innerHTML=""; renderMore();
 }
 
 function renderMore() {
-  const slice = filtered.slice(shown, shown + PAGE_SIZE);
-  const grid = $("#grid");
-  if(shown === 0 && !filtered.length) { grid.innerHTML = '<div class="empty-msg">조건에 맞는 항목 없음</div>'; }
-  slice.forEach(it => grid.appendChild(card(it)));
-  shown += slice.length;
-  $("#moreBtn").hidden = shown >= filtered.length;
+  const slice=filtered.slice(shown,shown+PAGE_SIZE);
+  const grid=$("#grid");
+  if(shown===0&&!filtered.length){ grid.innerHTML='<div class="empty-msg">조건에 맞는 항목 없음</div>'; }
+  slice.forEach(it=>grid.appendChild(card(it)));
+  shown+=slice.length;
+  $("#moreBtn").hidden=shown>=filtered.length;
 }
 
-// ─── 파싱 ───
+// ── 그룹 편집기 ──
+function openEditor() {
+  if(GH_TOKEN) $("#ghInput").value = GH_TOKEN;
+  renderEditor();
+  $("#editorWrap").classList.remove("hidden");
+}
+
+function renderEditor() {
+  const ct = tagCounts();
+  const assigned = new Set(tagGroups.flatMap(g=>g.tags));
+  const unassigned = Object.keys(ct).filter(t=>!assigned.has(t)).sort((a,b)=>ct[b]-ct[a]);
+
+  // groups
+  const host = $("#edGroups"); host.innerHTML="";
+  tagGroups.forEach((g,gi) => {
+    const div = el("div","ed-group");
+    const hdr = el("div","ed-group-hdr");
+    const nameInput = el("input","ed-group-name");
+    nameInput.value = g.name;
+    nameInput.oninput = () => { tagGroups[gi].name=nameInput.value; };
+    hdr.appendChild(nameInput);
+    const delBtn = el("button","sm danger","삭제");
+    delBtn.onclick = () => { tagGroups.splice(gi,1); renderEditor(); };
+    hdr.appendChild(delBtn);
+    div.appendChild(hdr);
+
+    const tags = el("div","ed-tags");
+    const visible = g.tags.filter(t=>ct[t]);
+    if(!visible.length) tags.appendChild(el("span","ed-empty","(이 컬렉션엔 해당 태그 없음)"));
+    g.tags.forEach((t,ti) => {
+      const tag = el("span","ed-tag");
+      tag.appendChild(el("span",null,t));
+      const rm = el("button","ed-rm","×");
+      rm.title="그룹에서 제거";
+      rm.onclick = () => { tagGroups[gi].tags.splice(ti,1); renderEditor(); };
+      tag.appendChild(rm);
+      tags.appendChild(tag);
+    });
+    div.appendChild(tags);
+    host.appendChild(div);
+  });
+
+  // unassigned
+  const us = $("#unassignedSection"); us.innerHTML="";
+  if(!unassigned.length) return;
+  us.appendChild(el("div","unassigned-hdr","기타 (미분류)"));
+  unassigned.forEach(t => {
+    const row = el("div","un-row");
+    row.appendChild(el("span","un-name",t));
+    row.appendChild(el("span","un-ct",ct[t]));
+    const sel = document.createElement("select");
+    sel.className="un-sel";
+    const opt0 = el("option",null,"→ 그룹 선택");
+    opt0.value=""; sel.appendChild(opt0);
+    tagGroups.forEach((g,gi) => {
+      const opt = el("option",null,g.name);
+      opt.value=gi; sel.appendChild(opt);
+    });
+    sel.onchange = () => {
+      const gi=parseInt(sel.value);
+      if(!isNaN(gi)){ tagGroups[gi].tags.push(t); renderEditor(); }
+      else sel.value="";
+    };
+    row.appendChild(sel);
+    us.appendChild(row);
+  });
+}
+
+// ── 파싱/Syn ──
 function parseTweet(link) {
-  const s = String(link || "");
-  const idm = s.match(/(?:\/status(?:es)?\/|\/i\/web\/status\/|\/i\/status\/)(\d+)/i);
+  const s=String(link||"");
+  const idm=s.match(/(?:\/status(?:es)?\/|\/i\/web\/status\/|\/i\/status\/)(\d+)/i);
   if(!idm) return null;
-  const id = idm[1];
-  const hm = s.match(/(?:twitter|x|vxtwitter|fxtwitter|mobile\.twitter|nitter[^\/]*)\.com\/([^\/\?#]+)\/status/i);
-  let handle = null;
-  if(hm && !/^(i|web|intent|home|messages)$/i.test(hm[1])) handle = hm[1].replace(/^@/, "");
-  return { id, handle, clean: handle ? `https://x.com/${handle}/status/${id}` : `https://x.com/i/status/${id}` };
+  const id=idm[1];
+  const hm=s.match(/(?:twitter|x|vxtwitter|fxtwitter|mobile\.twitter|nitter[^\/]*)\.com\/([^\/\?#]+)\/status/i);
+  let handle=null;
+  if(hm&&!/^(i|web|intent|home|messages)$/i.test(hm[1])) handle=hm[1].replace(/^@/,"");
+  return {id,handle,clean:handle?`https://x.com/${handle}/status/${id}`:`https://x.com/i/status/${id}`};
 }
-
-// ─── Syndication ───
-function synToken(id) {
-  try { return ((Number(id) / 1e15) * Math.PI).toString(36).replace(/(0+|\.)/g, ""); } catch { return "0"; }
-}
+function synToken(id){ try{return((Number(id)/1e15)*Math.PI).toString(36).replace(/(0+|\.)/g,"")}catch{return"0"} }
 async function fetchSyn(id) {
   if(synCache[id]) return synCache[id];
   if(inflight[id]) return inflight[id];
-  inflight[id] = (async () => {
-    try {
-      const r = await fetch(`https://cdn.syndication.twimg.com/tweet-result?id=${id}&token=${synToken(id)}&lang=en`);
+  inflight[id]=(async()=>{
+    try{
+      const r=await fetch(`https://cdn.syndication.twimg.com/tweet-result?id=${id}&token=${synToken(id)}&lang=en`);
       if(!r.ok) throw 0;
-      const d = await r.json();
-      const cover = d?.mediaDetails?.[0]?.media_url_https || d?.photos?.[0]?.url || "";
-      const v = { name: d?.user?.name || "", handle: d?.user?.screen_name || "", cover };
-      synCache[id] = v; return v;
-    } catch { synCache[id] = { name: "", handle: "", cover: "" }; return synCache[id]; }
-    finally { delete inflight[id]; }
+      const d=await r.json();
+      const cover=d?.mediaDetails?.[0]?.media_url_https||d?.photos?.[0]?.url||"";
+      const v={name:d?.user?.name||"",handle:d?.user?.screen_name||"",cover};
+      synCache[id]=v; return v;
+    }catch{ synCache[id]={name:"",handle:"",cover:""}; return synCache[id]; }
+    finally{ delete inflight[id]; }
   })();
   return inflight[id];
 }
 
-// ─── 카드 ───
-const ICON_LINK = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 11L11 2M11 2H6M11 2V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+// ── 카드 ──
+const ICON=`<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 11L11 2M11 2H6M11 2V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 function card(it) {
-  const tw = parseTweet(it.link);
-  const c = el("div", "item");
+  const tw=parseTweet(it.link);
+  const c=el("div","item");
 
-  // 썸네일
-  const thumb = el("div", "thumb empty");
-  const img = el("img"); img.loading = "lazy"; img.alt = "";
-  let coverDone = false, synPromise = null;
-
-  const showEmpty = () => { thumb.classList.add("empty"); if(img.parentNode) img.remove(); };
-  const setImg = u => {
-    if(!u) { showEmpty(); return; }
-    thumb.classList.remove("empty");
-    if(!img.parentNode) thumb.appendChild(img);
-    img.src = u;
-  };
-  const ensureSyn = () => {
-    if(!tw) return Promise.resolve({ name: "", handle: "", cover: "" });
-    if(!synPromise) synPromise = fetchSyn(tw.id);
-    return synPromise;
-  };
-
-  const rawCover = it.cover || (it.media && it.media[0] && it.media[0].link) || "";
-  img.onload = () => { coverDone = true; };
-  img.onerror = () => {
-    if(!coverDone) {
-      img.onerror = null;
-      ensureSyn().then(v => { if(v.cover) setImg(v.cover); else showEmpty(); });
-    }
-  };
+  const thumb=el("div","thumb empty");
+  const img=el("img"); img.loading="lazy"; img.alt="";
+  let coverDone=false, synPromise=null;
+  const showEmpty=()=>{thumb.classList.add("empty");if(img.parentNode)img.remove();};
+  const setImg=u=>{if(!u){showEmpty();return;}thumb.classList.remove("empty");if(!img.parentNode)thumb.appendChild(img);img.src=u;};
+  const ensureSyn=()=>{if(!tw)return Promise.resolve({name:"",handle:"",cover:""});if(!synPromise)synPromise=fetchSyn(tw.id);return synPromise;};
+  const rawCover=it.cover||(it.media&&it.media[0]&&it.media[0].link)||"";
+  img.onload=()=>{coverDone=true;};
+  img.onerror=()=>{if(!coverDone){img.onerror=null;ensureSyn().then(v=>{if(v.cover)setImg(v.cover);else showEmpty();});}};
   if(rawCover) setImg(rawCover);
   c.appendChild(thumb);
 
-  // 본문
-  const body = el("div", "card-body");
-  const nameEl = el("div", "card-name", it.title || "(제목 없음)");
+  const body=el("div","card-body");
+  const nameEl=el("div","card-name",it.title||"(제목 없음)");
   body.appendChild(nameEl);
-  const note = noteOf(it);
-  if(note) body.appendChild(el("div", "card-note", note));
-  if(it.tags && it.tags.length) {
-    const tr = el("div", "card-tags");
-    it.tags.forEach(t => tr.appendChild(el("span", "tag", t)));
+  const note=noteOf(it);
+  if(note) body.appendChild(el("div","card-note",note));
+  if(it.tags&&it.tags.length){
+    const tr=el("div","card-tags");
+    it.tags.forEach(t=>tr.appendChild(el("span","tag",t)));
     body.appendChild(tr);
   }
   c.appendChild(body);
 
-  // 원본 링크
-  const openDiv = el("div", "card-open");
-  const a = el("a"); a.href = tw ? tw.clean : it.link;
-  a.target = "_blank"; a.rel = "noopener"; a.title = "원본 열기";
-  a.innerHTML = ICON_LINK;
+  const openDiv=el("div","card-open");
+  const a=el("a"); a.href=tw?tw.clean:it.link; a.target="_blank"; a.rel="noopener"; a.title="원본 열기"; a.innerHTML=ICON;
   openDiv.appendChild(a); c.appendChild(openDiv);
 
-  // syndication 보충: 커버 없음 / 핸들 없음 / 닉네임 없음
-  const handleOnly = tw && !/\(/.test(it.title || "");
-  if(tw && (!rawCover || !tw.handle || handleOnly)) {
-    ensureSyn().then(v => {
-      if(!coverDone && !rawCover && v.cover) setImg(v.cover);
-      const handle = tw.handle || v.handle || "";
-      if(handle) a.href = `https://x.com/${handle}/status/${tw.id}`;
-      if(handleOnly && v.name) nameEl.textContent = `${v.name} (${handle})`;
+  const handleOnly=tw&&!/\(/.test(it.title||"");
+  if(tw&&(!rawCover||!tw.handle||handleOnly)){
+    ensureSyn().then(v=>{
+      if(!coverDone&&!rawCover&&v.cover) setImg(v.cover);
+      const handle=tw.handle||v.handle||"";
+      if(handle) a.href=`https://x.com/${handle}/status/${tw.id}`;
+      if(handleOnly&&v.name) nameEl.textContent=`${v.name} (${handle})`;
     });
   }
   return c;
 }
 
-// ─── 이벤트 ───
+// ── 이벤트 ──
 $("#connectBtn").onclick = connect;
-$("#tokInput").addEventListener("keydown", e => { if(e.key === "Enter") connect(); });
-$("#changeBtn").onclick = () => {
-  $("#tokPanel").hidden = false;
-  $("#tokInput").value = TOKEN;
-  setTimeout(() => $("#tokInput").focus(), 50);
-};
+$("#tokInput").addEventListener("keydown", e=>{if(e.key==="Enter")connect();});
+$("#changeBtn").onclick = ()=>{ $("#tokPanel").hidden=false; $("#tokInput").value=TOKEN; setTimeout(()=>$("#tokInput").focus(),50); };
+
 let kwTimer;
-$("#kw").addEventListener("input", e => {
-  kw = e.target.value; clearTimeout(kwTimer);
-  kwTimer = setTimeout(applyFilter, 120);
-});
-$("#resetBtn").onclick = () => {
-  tagState = {}; kw = "";
-  const kwEl = $("#kw"); if(kwEl) kwEl.value = "";
-  document.querySelectorAll(".tg").forEach(b => b.className = "tg");
-  document.querySelectorAll(".act-ct").forEach(s => { s.hidden = true; });
-  applyFilter();
+$("#kw").addEventListener("input", e=>{ kw=e.target.value; clearTimeout(kwTimer); kwTimer=setTimeout(applyFilter,120); });
+
+$("#resetBtn").onclick = ()=>{
+  tagState={}; kw=""; activeCat=null;
+  const k=$("#kw"); if(k) k.value="";
+  buildFilter(); applyFilter();
+};
+$("#refreshBtn").onclick = ()=>{ if(curCollId!==null) loadAll(curCollId,curCollTitle,true); };
+$("#editBtn").onclick = openEditor;
+$("#closeEditorBtn").onclick = ()=>{ $("#editorWrap").classList.add("hidden"); buildFilter(); };
+$("#addGroupBtn").onclick = ()=>{ tagGroups.push({name:"새 그룹",tags:[]}); renderEditor(); };
+$("#saveBtn").onclick = async ()=>{
+  const btn=$("#saveBtn"), msgEl=$("#saveMsg");
+  btn.disabled=true; msgEl.className="save-msg"; msgEl.textContent="저장 중…";
+  try{
+    await saveConfig();
+    msgEl.className="save-msg ok"; msgEl.textContent="저장됨 ✓";
+    setTimeout(()=>{msgEl.textContent="";},3000);
+  }catch(e){ msgEl.className="save-msg err"; msgEl.textContent=e.message; }
+  finally{ btn.disabled=false; }
 };
 $("#moreBtn").onclick = renderMore;
 
-if(TOKEN) { $("#tokInput").value = TOKEN; connect(); }
+if(TOKEN){ $("#tokInput").value=TOKEN; connect(); }
+if(GH_TOKEN) $("#ghInput").value=GH_TOKEN;
 </script>
 </body>
 </html>
