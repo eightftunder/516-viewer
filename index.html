@@ -599,11 +599,11 @@ function parseTweet(link) {
   return {id,handle,clean:handle?`https://x.com/${handle}/status/${id}`:`https://x.com/i/status/${id}`};
 }
 function synToken(id){try{return((Number(id)/1e15)*Math.PI).toString(36).replace(/(0+|\.)/g,"")}catch{return"0"}}
-// 트윗 ID(snowflake) → UTC 타임스탬프 → 기기 시간대 날짜
+// 트윗 ID(snowflake) → UTC 타임스탬프 → 기기 시간대 날짜 (29 Jun 2026)
 function postDate(id){
   try{
     const ms=Number((BigInt(id)>>22n)+1288834974657n);
-    return new Date(ms).toLocaleDateString();
+    return new Date(ms).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
   }catch{return"";}
 }
 function synUrl(id){ return SYN_PROXY ? `${SYN_PROXY}?id=${id}` : `https://cdn.syndication.twimg.com/tweet-result?id=${id}&token=${synToken(id)}&lang=en`; }
@@ -669,7 +669,7 @@ function card(it) {
       if(!coverDone&&!rawCover&&v.cover) setImg(v.cover);
       const handle=tw.handle||v.handle||"";
       if(handle) a.href=`https://x.com/${handle}/status/${tw.id}`;
-      if(handleOnly&&v.name) nameEl.textContent=`${v.name} (${handle})`;
+      if(handleOnly&&v.name) nameEl.textContent=`${v.name} (@${handle})`;
     });
   }
   return c;
@@ -682,6 +682,8 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function titleState(it,tw){
   const t=(it.title||"").trim();
   if(!t) return "empty";
+  if(/\s\(@[^)]+\)$/.test(t)) return "ok";        // '닉네임 (@핸들)' 완성형
+  if(/\S\(@[^)]+\)$/.test(t)) return "nospace";   // '닉네임(@핸들)' 공백만 없음
   if(t.startsWith("@")) return "handle";
   if(/^https?:\/\//i.test(t)) return "url";
   if(/^(www\.)?(x|twitter|mobile\.twitter)\.com(\/|$)/i.test(t)) return "url";
@@ -700,27 +702,36 @@ function findFixTargets(){
   return fixTargets;
 }
 
+// 대상 1건의 새 제목 계산. nospace는 호출 없음, 나머지는 syndication.
+async function computeNewTitle(it,tw,st){
+  if(st==="nospace"){
+    return (it.title||"").trim().replace(/\s*\(@/," (@");
+  }
+  const v=await fetchSyn(tw.id);
+  const handle=tw.handle||v.handle||"";
+  if(v.name&&handle) return `${v.name} (@${handle})`;
+  return null;
+}
+
 async function previewFix(){
   const host=$("#fixPreview");
   host.innerHTML='<div class="fix-msg">대상 찾는 중…</div>';
   findFixTargets();
   if(!fixTargets.length){ host.innerHTML='<div class="fix-msg">정리할 항목이 없어 (이 컬렉션 기준).</div>'; return; }
-  const by={empty:0,url:0,handle:0};
+  const by={empty:0,url:0,handle:0,nospace:0};
   fixTargets.forEach(t=>by[t.st]++);
 
-  // 샘플 5개 실제 before→after (syndication 미리 호출)
+  // 샘플 5개 실제 before→after
   const sample=fixTargets.slice(0,5);
-  const pairs=await Promise.all(sample.map(async({it,tw})=>{
-    const v=await fetchSyn(tw.id);
-    const handle=tw.handle||v.handle||"";
-    const nt=(v.name&&handle)?`${v.name} (${handle})`:"(데이터 없음 → 건너뜀)";
-    return {cur:it.title||"(비어있음)", nt};
+  const pairs=await Promise.all(sample.map(async({it,tw,st})=>{
+    const nt=await computeNewTitle(it,tw,st);
+    return {cur:it.title||"(비어있음)", nt:nt||"(데이터 없음 → 건너뜀)"};
   }));
 
   host.innerHTML=`
-    <div class="fix-msg">대상 <b>${fixTargets.length}</b>개 — 비어있음 ${by.empty} · 링크형 ${by.url} · 핸들만 ${by.handle}</div>
+    <div class="fix-msg">대상 <b>${fixTargets.length}</b>개 — 비어있음 ${by.empty} · 링크형 ${by.url} · 핸들만 ${by.handle} · 공백없음 ${by.nospace}</div>
     <div class="fix-pairs">${pairs.map(p=>`<div class="fix-pair">${esc(p.cur)} → <b>${esc(p.nt)}</b></div>`).join("")}</div>
-    <div class="fix-warn">⚠ 실행하면 이 ${fixTargets.length}개의 제목을 레인드롭에 실제로 덮어써. syndication 실패(삭제·보호)한 건 건너뛰고 그대로 둠. rate limit 때문에 1개당 ~0.6초, 약 ${Math.ceil(fixTargets.length*0.6/60)}분 걸려.</div>
+    <div class="fix-warn">⚠ 실행하면 이 ${fixTargets.length}개의 제목을 레인드롭에 실제로 덮어써. 이미 '닉네임 (@핸들)' 형식은 안 건드림. syndication 실패(삭제·보호)는 건너뜀. 1개당 ~0.6초, 약 ${Math.ceil(fixTargets.length*0.6/60)}분.</div>
     <button class="primary" id="runFixBtn">${fixTargets.length}개 제목 수정 실행</button>`;
   $("#runFixBtn").onclick=runFix;
 }
@@ -756,15 +767,11 @@ async function runFix(){
   let done=0,fixed=0,skipped=0;
   const total=fixTargets.length;
 
-  for(const {it,tw} of fixTargets){
+  for(const {it,tw,st} of fixTargets){
     if(fixCancel) break;
     let newTitle=null;
-    try{
-      const v=await fetchSyn(tw.id);
-      const handle=tw.handle||v.handle||"";
-      if(v.name&&handle) newTitle=`${v.name} (${handle})`;
-    }catch{}
-    if(newTitle){
+    try{ newTitle=await computeNewTitle(it,tw,st); }catch{}
+    if(newTitle && newTitle!==(it.title||"").trim()){
       try{
         await rdUpdate(it._id,{title:newTitle});
         it.title=newTitle;
@@ -772,7 +779,7 @@ async function runFix(){
       }catch(e){ skipped++; logLine(log,`✗ 쓰기실패 (${tw.id})`,"err"); }
       await sleep(600);
     }else{
-      skipped++; logLine(log,`– 건너뜀·데이터없음 (${tw.id})`,"skip");
+      skipped++; logLine(log,`– 건너뜀 (${tw.id})`,"skip");
     }
     done++;
     $("#fixBar").style.width=(done/total*100)+"%";
