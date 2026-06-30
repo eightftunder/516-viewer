@@ -204,9 +204,10 @@ button:disabled{opacity:.4;cursor:default}
 .modal-body textarea{width:100%;min-height:58px;resize:vertical;font-family:"Pretendard",sans-serif;font-size:14px;padding:9px 11px;border:1px solid var(--line2);border-radius:8px;background:var(--chip);color:var(--ink);outline:none}
 .modal-body textarea:focus,.modal-body input:focus,.modal-body select:focus{border-color:var(--ink)}
 .tag-edit{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.tag-chip{font-size:12px;padding:3px 5px 3px 10px;border-radius:999px;background:var(--sel-bg);color:var(--sel-fg);display:inline-flex;align-items:center;gap:5px}
+.tag-chip{font-size:12px;padding:5px 6px 5px 11px;border-radius:999px;background:var(--sel-bg);color:var(--sel-fg);display:inline-flex;align-items:center;gap:5px}
 .tag-chip button{background:none;border:none;color:inherit;cursor:pointer;padding:0;font-size:14px;line-height:1}
 .tag-input-wrap{position:relative;flex:1;min-width:90px}
+.tag-input-wrap input{width:100%;height:30px;padding:4px 11px;font-size:13px}
 .tag-suggest{position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--line2);border-radius:8px;margin-top:4px;max-height:160px;overflow:auto;z-index:10}
 .tag-suggest div{padding:8px 11px;font-size:13px;cursor:pointer}
 .tag-suggest div.active,.tag-suggest div:hover{background:var(--hover)}
@@ -275,7 +276,7 @@ button:disabled{opacity:.4;cursor:default}
       <input id="ghInput" type="password" placeholder="GitHub PAT (저장에 필요, repo 권한)" autocomplete="off" spellcheck="false">
     </div>
     <div class="save-row">
-      <button class="primary" id="saveBtn">GitHub에 저장</button>
+      <button class="primary sm" id="saveBtn">GitHub에 저장</button>
       <span class="save-msg" id="saveMsg"></span>
     </div>
 
@@ -406,7 +407,9 @@ function renderCollections(cols) {
     const ia=COLL_ORDER.indexOf(a.title), ib=COLL_ORDER.indexOf(b.title);
     return (ia===-1?999:ia)-(ib===-1?999:ib);
   });
-  COLLECTIONS = ordered.map(c=>({id:c._id,title:c.title}));  // 모달 컬렉션 이동용
+  const seenColl=new Set();
+  COLLECTIONS = ordered.filter(c=>{ if(seenColl.has(c._id))return false; seenColl.add(c._id); return true; })
+                       .map(c=>({id:c._id,title:c.title}));  // 모달 컬렉션 이동용 (중복 제거)
   [{_id:0,title:"All"},{_id:-1,title:"Unsorted"},...ordered].forEach(c=>{
     if(seen.has(c._id)) return; seen.add(c._id);
     const chip=el("button","coll-chip");
@@ -818,16 +821,21 @@ function renderModalTags(){
     const x=el("button",null,"×"); x.onclick=()=>{modalTags.splice(i,1);renderModalTags();};
     chip.appendChild(x); host.appendChild(chip);
   });
-  // 입력칸 + 자동완성
   const wrap=el("div","tag-input-wrap");
   const inp=el("input"); inp.type="text"; inp.placeholder="태그 추가"; inp.autocomplete="off";
   const sug=el("div","tag-suggest"); sug.hidden=true;
   wrap.appendChild(inp); wrap.appendChild(sug); host.appendChild(wrap);
 
   const allTags=Object.keys(tagCounts());
+  let active=-1;
+
+  function highlight(){
+    [...sug.children].forEach((d,i)=>d.classList.toggle("active",i===active));
+    const a=sug.children[active]; if(a) a.scrollIntoView({block:"nearest"});
+  }
   function refresh(){
     const q=inp.value.trim().toLowerCase();
-    sug.innerHTML="";
+    sug.innerHTML=""; active=-1;
     if(!q){ sug.hidden=true; return; }
     const matches=allTags.filter(t=>t.toLowerCase().includes(q)&&!modalTags.includes(t)).slice(0,8);
     if(!matches.length){ sug.hidden=true; return; }
@@ -841,12 +849,20 @@ function renderModalTags(){
   function addTag(t){
     t=t.trim(); if(t&&!modalTags.includes(t)) modalTags.push(t);
     renderModalTags();
-    setTimeout(()=>M.tagEdit.querySelector("input")?.focus(),0);
+    setTimeout(()=>M.tagEdit.querySelector(".tag-input-wrap input")?.focus(),0);
   }
   inp.oninput=refresh;
   inp.onkeydown=e=>{
-    if(e.key==="Enter"){ e.preventDefault(); if(inp.value.trim()) addTag(inp.value); }
-    else if(e.key==="Backspace"&&!inp.value&&modalTags.length){ modalTags.pop(); renderModalTags(); setTimeout(()=>M.tagEdit.querySelector("input")?.focus(),0); }
+    const items=[...sug.children];
+    if(e.key==="ArrowDown"){ e.preventDefault(); if(items.length){ active=(active+1)%items.length; highlight(); } }
+    else if(e.key==="ArrowUp"){ e.preventDefault(); if(items.length){ active=(active-1+items.length)%items.length; highlight(); } }
+    else if(e.key==="Enter"){
+      e.preventDefault();
+      if(active>=0&&items[active]) addTag(items[active].textContent);
+      else if(inp.value.trim()) addTag(inp.value);
+    }
+    else if(e.key==="Escape"){ if(!sug.hidden){ e.stopPropagation(); sug.hidden=true; } }
+    else if(e.key==="Backspace"&&!inp.value&&modalTags.length){ modalTags.pop(); renderModalTags(); setTimeout(()=>M.tagEdit.querySelector(".tag-input-wrap input")?.focus(),0); }
   };
   inp.onblur=()=>setTimeout(()=>{sug.hidden=true;},150);
 }
@@ -855,16 +871,32 @@ async function saveModal(){
   if(!modalItem) return;
   const it=modalItem;
   M.save.disabled=true; M.msg.className="modal-msg"; M.msg.textContent="저장 중…";
+
+  // ⚠ 바뀐 필드만 보냄 — 안 건드린 건 절대 덮어쓰지 않음
+  const body={};
+  const newTitle=M.title.value.trim();
+  if(newTitle!==(it.title||"")) body.title=newTitle;
+  const newNote=M.note.value;
+  if(newNote!==(it.note||"")) body.note=newNote;
+  const oldTags=it.tags||[];
+  const tagsChanged = modalTags.length!==oldTags.length || oldTags.some(t=>!modalTags.includes(t)) || modalTags.some(t=>!oldTags.includes(t));
+  if(tagsChanged) body.tags=[...modalTags];
   const newColl=parseInt(M.coll.value);
   const oldColl=it.collectionId||(it.collection&&it.collection.$id);
-  const body={ title:M.title.value.trim(), note:M.note.value, tags:[...modalTags] };
-  const moved = !isNaN(newColl)&&newColl!==oldColl;
+  const moved=!isNaN(newColl)&&newColl!==oldColl;
   if(moved) body.collection={"$id":newColl};
+
+  if(Object.keys(body).length===0){ closeModal(); return; }  // 변경 없음
+
   try{
     await rdUpdate(it._id,body);
-    it.title=body.title; it.note=body.note; it.tags=[...modalTags];
-    if(moved){ it.collectionId=newColl; if(it.collection) it.collection.$id=newColl;
-      if(curCollId!==0&&curCollId!==-1&&newColl!==curCollId){ const i=ALL.indexOf(it); if(i>=0) ALL.splice(i,1); } }
+    if('title' in body) it.title=body.title;
+    if('note' in body) it.note=body.note;
+    if('tags' in body) it.tags=[...modalTags];
+    if(moved){
+      it.collectionId=newColl; if(it.collection) it.collection.$id=newColl;
+      if(curCollId!==0&&curCollId!==-1&&newColl!==curCollId){ const i=ALL.indexOf(it); if(i>=0) ALL.splice(i,1); }
+    }
     collCache[curCollId]=ALL;
     closeModal(); buildFilter(); applyFilter();
   }catch(e){
@@ -954,16 +986,16 @@ async function rdUpdate(id,body){
     headers:{Authorization:"Bearer "+TOKEN,"Content-Type":"application/json"},
     body:JSON.stringify(body)
   });
-  if(!r.ok) throw new Error(r.status);
-  return r.json();
+  if(!r.ok) throw new Error("PUT "+r.status);
+  return r.text().catch(()=>"");   // 본문 비어도 안 멈추게 (json 파싱 안 함)
 }
 async function rdDelete(id){
   const r=await fetch(`${RD_API}/raindrop/${id}`,{
     method:"DELETE",
     headers:{Authorization:"Bearer "+TOKEN}
   });
-  if(!r.ok) throw new Error(r.status);
-  return r.json();
+  if(!r.ok) throw new Error("DELETE "+r.status);
+  return r.text().catch(()=>"");
 }
 
 function logLine(host,text,cls){
