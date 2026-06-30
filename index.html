@@ -239,8 +239,13 @@ const PERPAGE  = 50, PAGE_SIZE = 80;
 // 고정 대분류
 const CATEGORIES = ["필모", "화보 + 광고", "행사 + 이벤트", "방송 + 유튜브", "나머지"];
 
+<<<<<<< HEAD
 // syndication CORS 우회 프록시 (github.io 등에선 직접 호출이 막혀서 필요).
 // 모든 기기에서 작동하도록 코드에 박아둠. Worker 주소 바뀌면 여기만 수정.
+=======
+// syndication CORS 우회 프록시. github.io 등에선 직접 호출이 막혀서 필요.
+// Cloudflare Worker 배포 후 그 URL을 여기 붙여넣기 (끝에 슬래시 없이). 비우면 직접 호출.
+>>>>>>> 9c6e4e9a965ea79032f30ce6adc8d2464743ef2b
 const SYN_PROXY = "https://516-viewer.8290570.workers.dev";
 
 // ── 저장소 ──
