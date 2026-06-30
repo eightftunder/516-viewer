@@ -242,7 +242,7 @@ button:disabled{opacity:.4;cursor:default}
 
   <div class="editor-wrap hidden" id="editorWrap">
     <div class="editor-hdr">
-      <h2>태그 그룹</h2>
+      <h2 id="edTitle">태그 그룹</h2>
       <button class="sm" id="closeEditorBtn">닫기</button>
     </div>
     <div class="ed-cats" id="edCats"></div>
@@ -308,11 +308,11 @@ const esc = s => String(s??"").replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>'
 const b64enc = s => btoa(unescape(encodeURIComponent(s)));
 const b64dec = s => decodeURIComponent(escape(atob(s.replace(/\s/g,""))));
 
-function emptyCfg(){ const o={}; CATEGORIES.forEach(c=>o[c]=[]); return o; }
+function defaultCfg(){ const o={"🔗 516 archive":{}}; CATEGORIES.forEach(c=>o["🔗 516 archive"][c]=[]); return o; }
 
 // ── GitHub config ──
 async function loadConfig() {
-  tagGroups = emptyCfg();
+  tagGroups = defaultCfg();
   try {
     const hdrs={Accept:"application/vnd.github.v3+json"};
     if(GH_TOKEN) hdrs.Authorization="Bearer "+GH_TOKEN;
@@ -322,7 +322,13 @@ async function loadConfig() {
     const d=await r.json();
     configSha=d.sha;
     const parsed=JSON.parse(b64dec(d.content));
-    CATEGORIES.forEach(c=>{ if(Array.isArray(parsed[c])) tagGroups[c]=parsed[c]; });
+    const vals=Object.values(parsed);
+    if(vals.length && vals.every(v=>Array.isArray(v))){
+      // 옛 평면 구조 {대분류:[태그]} → 516 archive 아래로 이동
+      tagGroups={"🔗 516 archive":parsed};
+    }else{
+      tagGroups=parsed; // 이미 컬렉션별 중첩
+    }
   } catch {}
 }
 async function saveConfig() {
@@ -435,10 +441,26 @@ function afterLoad(){
 
 // ── 태그 유틸 ──
 function tagCounts(){ const ct={}; ALL.forEach(it=>(it.tags||[]).forEach(t=>ct[t]=(ct[t]||0)+1)); return ct; }
+
+// 현재 컬렉션의 대분류 세트. All/Unsorted는 전체 합쳐서(읽기전용) 반환.
+function curCats(){
+  if(curCollId===0||curCollId===-1){
+    const merged={};
+    Object.values(tagGroups).forEach(set=>{
+      Object.entries(set||{}).forEach(([cat,tags])=>{ merged[cat]=[...(merged[cat]||[]),...tags]; });
+    });
+    return merged;
+  }
+  if(!tagGroups[curCollTitle]) tagGroups[curCollTitle]={};
+  return tagGroups[curCollTitle];
+}
+function isEditableColl(){ return curCollId!==0 && curCollId!==-1; }
+
 function getGroups(){
   const ct=tagCounts();
-  const assigned=new Set(Object.values(tagGroups).flat());
-  const groups=CATEGORIES.map(name=>({name,tags:(tagGroups[name]||[]).filter(t=>ct[t])})).filter(g=>g.tags.length);
+  const cats=curCats();
+  const assigned=new Set(Object.values(cats).flat());
+  const groups=Object.keys(cats).map(name=>({name,tags:(cats[name]||[]).filter(t=>ct[t])})).filter(g=>g.tags.length);
   const unassigned=Object.keys(ct).filter(t=>!assigned.has(t)).sort((a,b)=>ct[b]-ct[a]);
   if(unassigned.length) groups.push({name:"미분류",tags:unassigned});
   return {groups,ct};
@@ -536,31 +558,52 @@ function openEditor() {
   $("#editorWrap").classList.toggle("hidden");
 }
 function renderEditor() {
-  const cats=$("#edCats"); cats.innerHTML="";
-  CATEGORIES.forEach(name=>{
-    const b=el("button","cat-chip"+(edCat===name?" sel":""));
-    b.innerHTML=esc(name)+`<span class="coll-count">${(tagGroups[name]||[]).length}</span>`;
-    b.onclick=()=>{edCat=edCat===name?null:name;edSel.clear();renderEditor();};
-    cats.appendChild(b);
-  });
-  const panel=$("#edPanel"); panel.innerHTML="";
-  if(!edCat) return;
+  $("#edTitle").textContent = curCollTitle ? `태그 그룹 · ${curCollTitle}` : "태그 그룹";
+  const catsHost=$("#edCats"), panel=$("#edPanel");
+  catsHost.innerHTML=""; panel.innerHTML="";
+
+  if(!isEditableColl()){
+    panel.innerHTML='<div class="ed-empty">All / Unsorted는 합쳐 보기 전용이야. 편집하려면 특정 컬렉션(🔗 516 archive, 🔗 연성 등)을 불러와줘.</div>';
+    return;
+  }
+
+  const cats=curCats();                 // 이 컬렉션의 {대분류:[태그]}
   const ct=tagCounts();
 
+  Object.keys(cats).forEach(name=>{
+    const b=el("button","cat-chip"+(edCat===name?" sel":""));
+    b.innerHTML=esc(name)+`<span class="coll-count">${cats[name].length}</span>`;
+    b.onclick=()=>{edCat=edCat===name?null:name;edSel.clear();renderEditor();};
+    catsHost.appendChild(b);
+  });
+  const addCat=el("button","cat-chip","+ 카테고리");
+  addCat.style.borderStyle="dashed";
+  addCat.onclick=()=>{
+    const n=(prompt("새 대분류 이름")||"").trim();
+    if(!n) return;
+    if(!cats[n]) cats[n]=[];
+    edCat=n; edSel.clear(); renderEditor();
+  };
+  catsHost.appendChild(addCat);
+
+  if(!edCat) return;
+
+  // 현재 태그
   panel.appendChild(el("div","ed-sub","현재 태그"));
   const cur=el("div","ed-tags2");
-  const list=tagGroups[edCat]||[];
+  const list=cats[edCat]||[];
   if(!list.length) cur.appendChild(el("span","ed-empty","아직 없음"));
   list.forEach((t,ti)=>{
     const tag=el("span","ed-tag");
     tag.appendChild(el("span",null,t+(ct[t]?` ${ct[t]}`:"")));
     const rm=el("button","ed-rm","×");
-    rm.onclick=()=>{tagGroups[edCat].splice(ti,1);renderEditor();};
+    rm.onclick=()=>{cats[edCat].splice(ti,1);renderEditor();};
     tag.appendChild(rm); cur.appendChild(tag);
   });
   panel.appendChild(cur);
 
-  const assigned=new Set(Object.values(tagGroups).flat());
+  // 미분류 → 추가
+  const assigned=new Set(Object.values(cats).flat());
   const unassigned=Object.keys(ct).filter(t=>!assigned.has(t)).sort((a,b)=>ct[b]-ct[a]);
   if(unassigned.length){
     panel.appendChild(el("div","ed-sub","추가할 태그 (미분류)"));
@@ -578,13 +621,15 @@ function renderEditor() {
     panel.appendChild(pool);
     const bar=el("div","ed-addbar");
     const add=el("button","sm primary",`선택한 ${edSel.size}개 추가`); add.id="edAddBtn";
-    add.onclick=()=>{
-      if(!edSel.size) return;
-      edSel.forEach(t=>tagGroups[edCat].push(t));
-      edSel.clear(); renderEditor();
-    };
+    add.onclick=()=>{ if(!edSel.size) return; edSel.forEach(t=>cats[edCat].push(t)); edSel.clear(); renderEditor(); };
     bar.appendChild(add); panel.appendChild(bar);
   }
+
+  // 카테고리 삭제
+  const delBar=el("div","ed-addbar");
+  const del=el("button","sm","이 카테고리 삭제");
+  del.onclick=()=>{ if(confirm(`'${edCat}' 대분류를 삭제할까? (태그는 미분류로 돌아감)`)){ delete cats[edCat]; edCat=null; renderEditor(); } };
+  delBar.appendChild(del); panel.appendChild(delBar);
 }
 
 // ── 파싱/Syn ──
