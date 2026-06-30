@@ -149,6 +149,23 @@ button:disabled{opacity:.4;cursor:default}
 .save-msg{font-size:12px;flex:1}
 .save-msg.ok{color:#1E7A4B}.save-msg.err{color:#B94040}
 
+/* 제목 일괄 정리 */
+.tools-sec{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.tools-desc{font-size:12px;color:var(--faint);margin-bottom:10px;line-height:1.5}
+.fix-msg{font-size:13px;margin:10px 0 6px}
+.fix-sample{font-size:12px;color:var(--muted);margin-bottom:8px;word-break:break-all}
+.fix-warn{font-size:12px;color:#B96512;background:var(--tag-bg);padding:9px 11px;border-radius:8px;margin:10px 0;line-height:1.5}
+.fix-pairs{margin:8px 0}
+.fix-pair{font-size:12px;color:var(--muted);margin:3px 0;word-break:break-all}
+.fix-pair b{color:var(--ink);font-weight:600}
+.fix-progress{display:flex;align-items:center;gap:10px;margin:10px 0;flex-wrap:wrap}
+.fix-bar{flex:1;height:4px;background:var(--line);border-radius:3px;overflow:hidden;min-width:120px}
+.fix-bar>span{display:block;height:100%;background:var(--ink);width:0;transition:width .2s}
+.fix-stat{font-size:12px;color:var(--muted);white-space:nowrap}
+.fix-log{max-height:150px;overflow:auto;margin-top:8px;font-size:11px;font-family:ui-monospace,Menlo,monospace}
+.fix-line{padding:1px 0}
+.fix-line.ok{color:var(--ink)}.fix-line.err{color:#B94040}.fix-line.skip{color:var(--faint)}
+
 /* ── 카드 ── */
 .grid{
   display:grid;
@@ -165,14 +182,16 @@ button:disabled{opacity:.4;cursor:default}
 .card-name{font-size:15px;font-weight:700;line-height:1.4;word-break:break-word}
 .card-note{font-size:13px;color:var(--muted);white-space:pre-wrap;word-break:break-word;line-height:1.55}
 .card-tags{display:flex;gap:5px;flex-wrap:wrap}
-.tag{font-size:12px;padding:4px 11px;border-radius:999px;background:var(--tag-bg);color:var(--tag-fg)}
-.card-open{display:flex;justify-content:flex-end;padding:2px 11px 11px;margin-top:auto}
-.card-open a{
+.tag{font-size:12px;padding:4px 11px;border-radius:999px;background:var(--tag-bg);color:var(--tag-fg);cursor:pointer}
+.tag:hover{background:var(--line2)}
+.card-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 11px 11px;margin-top:auto}
+.card-date{font-size:11px;color:var(--faint)}
+.card-foot a{
   display:inline-flex;align-items:center;justify-content:center;
-  width:28px;height:28px;border-radius:6px;
+  width:28px;height:28px;border-radius:6px;flex-shrink:0;
   border:1px solid var(--line);color:var(--faint);text-decoration:none;
 }
-.card-open a:hover{border-color:var(--ink);color:var(--ink)}
+.card-foot a:hover{border-color:var(--ink);color:var(--ink)}
 
 .empty-msg{color:var(--faint);font-size:13px;text-align:center;padding:40px;grid-column:1/-1}
 #moreBtn:not([hidden]){display:block;margin:16px auto}
@@ -235,6 +254,13 @@ button:disabled{opacity:.4;cursor:default}
       <button class="primary" id="saveBtn">GitHub에 저장</button>
       <span class="save-msg" id="saveMsg"></span>
     </div>
+
+    <div class="tools-sec">
+      <div class="ed-sub">제목 일괄 정리</div>
+      <div class="tools-desc">제목이 비었거나 · 링크형(x.com 등)이거나 · @핸들만 있는 항목을 syndication 닉네임으로 '닉네임 (핸들)'로 정리. 이미 그 형식인 건 안 건드림. 현재 불러온 컬렉션 대상 — <b>전부 정리하려면 All 컬렉션을 불러온 뒤</b> 실행.</div>
+      <button class="sm" id="fixTitlesBtn">대상 찾기</button>
+      <div id="fixPreview"></div>
+    </div>
   </div>
 
   <div class="grid" id="grid"></div>
@@ -251,6 +277,9 @@ const PERPAGE  = 50, PAGE_SIZE = 80;
 
 // 고정 대분류
 const CATEGORIES = ["필모", "화보 + 광고", "행사 + 이벤트", "방송 + 유튜브", "나머지"];
+
+// 컬렉션 표시 순서 (목록에 없는 건 뒤에 원래 순서대로)
+const COLL_ORDER = ["🔗 516 archive", "🔗 연성", "📎 wip"];
 
 // syndication CORS 우회 프록시 (github.io 등에선 직접 호출이 막혀서 필요).
 // 모든 기기에서 작동하도록 코드에 박아둠. Worker 주소 바뀌면 여기만 수정.
@@ -343,7 +372,11 @@ async function connect() {
 function renderCollections(cols) {
   const host=$("#collChips"); host.innerHTML="";
   const seen=new Set();
-  [{_id:0,title:"All"},{_id:-1,title:"Unsorted"},...cols].forEach(c=>{
+  const ordered=[...cols].sort((a,b)=>{
+    const ia=COLL_ORDER.indexOf(a.title), ib=COLL_ORDER.indexOf(b.title);
+    return (ia===-1?999:ia)-(ib===-1?999:ib);
+  });
+  [{_id:0,title:"All"},{_id:-1,title:"Unsorted"},...ordered].forEach(c=>{
     if(seen.has(c._id)) return; seen.add(c._id);
     const chip=el("button","coll-chip");
     chip.innerHTML=esc(c.title)+(c.count!=null&&c.count!==""?`<span class="coll-count">${c.count}</span>`:"");
@@ -458,6 +491,16 @@ function updateChrome(){
   const active=Object.keys(tagState).length>0||!!kw.trim();
   $("#resetBtn").classList.toggle("hidden",!active);
 }
+// 카드 태그 클릭 → 그 태그 단독 필터
+function focusTag(t){
+  tagState={}; tagState[t]="inc";
+  kw=""; const k=$("#kw"); if(k)k.value="";
+  const {groups}=getGroups();
+  const g=groups.find(g=>g.tags.includes(t));
+  activeCat=g?g.name:null;
+  buildFilter(); applyFilter();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
 
 // ── 필터 로직 ──
 const noteOf=it=>(it.note&&it.note.trim())||"";
@@ -556,6 +599,13 @@ function parseTweet(link) {
   return {id,handle,clean:handle?`https://x.com/${handle}/status/${id}`:`https://x.com/i/status/${id}`};
 }
 function synToken(id){try{return((Number(id)/1e15)*Math.PI).toString(36).replace(/(0+|\.)/g,"")}catch{return"0"}}
+// 트윗 ID(snowflake) → UTC 타임스탬프 → 기기 시간대 날짜
+function postDate(id){
+  try{
+    const ms=Number((BigInt(id)>>22n)+1288834974657n);
+    return new Date(ms).toLocaleDateString();
+  }catch{return"";}
+}
 function synUrl(id){ return SYN_PROXY ? `${SYN_PROXY}?id=${id}` : `https://cdn.syndication.twimg.com/tweet-result?id=${id}&token=${synToken(id)}&lang=en`; }
 async function fetchSyn(id) {
   if(synCache[id]) return synCache[id];
@@ -598,14 +648,20 @@ function card(it) {
   if(note) body.appendChild(el("div","card-note",note));
   if(it.tags&&it.tags.length){
     const tr=el("div","card-tags");
-    it.tags.forEach(t=>tr.appendChild(el("span","tag",t)));
+    it.tags.forEach(t=>{
+      const tEl=el("span","tag",t);
+      tEl.onclick=()=>focusTag(t);
+      tr.appendChild(tEl);
+    });
     body.appendChild(tr);
   }
   c.appendChild(body);
 
-  const openDiv=el("div","card-open");
+  const foot=el("div","card-foot");
+  const dateStr=tw?postDate(tw.id):"";
+  foot.appendChild(el("span","card-date",dateStr));
   const a=el("a"); a.href=tw?tw.clean:it.link; a.target="_blank"; a.rel="noopener"; a.title="원본 열기"; a.innerHTML=ICON;
-  openDiv.appendChild(a); c.appendChild(openDiv);
+  foot.appendChild(a); c.appendChild(foot);
 
   const handleOnly=tw&&!/\(/.test(it.title||"");
   if(tw&&(!rawCover||!tw.handle||handleOnly)){
@@ -617,6 +673,114 @@ function card(it) {
     });
   }
   return c;
+}
+
+// ── 제목 일괄 정리 ──
+let fixTargets=[], fixCancel=false;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+function titleState(it,tw){
+  const t=(it.title||"").trim();
+  if(!t) return "empty";
+  if(t.startsWith("@")) return "handle";
+  if(/^https?:\/\//i.test(t)) return "url";
+  if(/^(www\.)?(x|twitter|mobile\.twitter)\.com(\/|$)/i.test(t)) return "url";
+  if(tw&&tw.handle&&t.toLowerCase()===tw.handle.toLowerCase()) return "handle";
+  return "ok";
+}
+
+function findFixTargets(){
+  fixTargets=[];
+  ALL.forEach(it=>{
+    const tw=parseTweet(it.link);
+    if(!tw) return;
+    const st=titleState(it,tw);
+    if(st!=="ok") fixTargets.push({it,tw,st});
+  });
+  return fixTargets;
+}
+
+async function previewFix(){
+  const host=$("#fixPreview");
+  host.innerHTML='<div class="fix-msg">대상 찾는 중…</div>';
+  findFixTargets();
+  if(!fixTargets.length){ host.innerHTML='<div class="fix-msg">정리할 항목이 없어 (이 컬렉션 기준).</div>'; return; }
+  const by={empty:0,url:0,handle:0};
+  fixTargets.forEach(t=>by[t.st]++);
+
+  // 샘플 5개 실제 before→after (syndication 미리 호출)
+  const sample=fixTargets.slice(0,5);
+  const pairs=await Promise.all(sample.map(async({it,tw})=>{
+    const v=await fetchSyn(tw.id);
+    const handle=tw.handle||v.handle||"";
+    const nt=(v.name&&handle)?`${v.name} (${handle})`:"(데이터 없음 → 건너뜀)";
+    return {cur:it.title||"(비어있음)", nt};
+  }));
+
+  host.innerHTML=`
+    <div class="fix-msg">대상 <b>${fixTargets.length}</b>개 — 비어있음 ${by.empty} · 링크형 ${by.url} · 핸들만 ${by.handle}</div>
+    <div class="fix-pairs">${pairs.map(p=>`<div class="fix-pair">${esc(p.cur)} → <b>${esc(p.nt)}</b></div>`).join("")}</div>
+    <div class="fix-warn">⚠ 실행하면 이 ${fixTargets.length}개의 제목을 레인드롭에 실제로 덮어써. syndication 실패(삭제·보호)한 건 건너뛰고 그대로 둠. rate limit 때문에 1개당 ~0.6초, 약 ${Math.ceil(fixTargets.length*0.6/60)}분 걸려.</div>
+    <button class="primary" id="runFixBtn">${fixTargets.length}개 제목 수정 실행</button>`;
+  $("#runFixBtn").onclick=runFix;
+}
+
+async function rdUpdate(id,body){
+  const r=await fetch(`${RD_API}/raindrop/${id}`,{
+    method:"PUT",
+    headers:{Authorization:"Bearer "+TOKEN,"Content-Type":"application/json"},
+    body:JSON.stringify(body)
+  });
+  if(!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+function logLine(host,text,cls){
+  host.prepend(el("div","fix-line "+cls,text));
+  while(host.children.length>60) host.lastChild.remove();
+}
+
+async function runFix(){
+  if(!confirm(`${fixTargets.length}개 제목을 레인드롭에 실제로 수정합니다. 계속할까요?`)) return;
+  fixCancel=false;
+  const host=$("#fixPreview");
+  host.innerHTML=`
+    <div class="fix-progress">
+      <div class="fix-bar"><span id="fixBar"></span></div>
+      <button class="sm" id="stopFixBtn">중단</button>
+    </div>
+    <div class="fix-stat" id="fixStat">시작…</div>
+    <div class="fix-log" id="fixLog"></div>`;
+  $("#stopFixBtn").onclick=()=>{fixCancel=true;$("#stopFixBtn").textContent="중단 중…";};
+  const log=$("#fixLog");
+  let done=0,fixed=0,skipped=0;
+  const total=fixTargets.length;
+
+  for(const {it,tw} of fixTargets){
+    if(fixCancel) break;
+    let newTitle=null;
+    try{
+      const v=await fetchSyn(tw.id);
+      const handle=tw.handle||v.handle||"";
+      if(v.name&&handle) newTitle=`${v.name} (${handle})`;
+    }catch{}
+    if(newTitle){
+      try{
+        await rdUpdate(it._id,{title:newTitle});
+        it.title=newTitle;
+        fixed++; logLine(log,`✓ ${newTitle}`,"ok");
+      }catch(e){ skipped++; logLine(log,`✗ 쓰기실패 (${tw.id})`,"err"); }
+      await sleep(600);
+    }else{
+      skipped++; logLine(log,`– 건너뜀·데이터없음 (${tw.id})`,"skip");
+    }
+    done++;
+    $("#fixBar").style.width=(done/total*100)+"%";
+    $("#fixStat").textContent=`${done}/${total} · 수정 ${fixed} · 건너뜀 ${skipped}`;
+  }
+  $("#fixStat").textContent+=fixCancel?" · 중단됨":" · 완료";
+  collCache[curCollId]=ALL;
+  buildFilter(); applyFilter();
 }
 
 // ── 이벤트 ──
@@ -636,6 +800,7 @@ $("#saveBtn").onclick=async()=>{
   finally{btn.disabled=false;}
 };
 $("#moreBtn").onclick=renderMore;
+$("#fixTitlesBtn").onclick=previewFix;
 
 if(TOKEN){$("#tokInput").value=TOKEN;connect();}
 </script>
