@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>516 viewer</title>
+<link rel="apple-touch-icon" href="app-icon.png">
+<link rel="icon" href="app-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="516">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&display=swap" rel="stylesheet">
@@ -137,32 +141,37 @@ button:disabled{opacity:.4;cursor:default}
 .af-pill.exc{background:var(--line);color:var(--muted);text-decoration:line-through}
 .af-x{opacity:.6;font-size:10px}
 
-/* ── 편집기 ── */
-.editor-wrap{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:var(--pad);margin-bottom:var(--gap)}
-.editor-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.editor-hdr h2{font-size:13px;font-weight:700;margin:0}
-.ed-cats{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
-.ed-sub{font-size:12px;font-weight:600;color:var(--muted);margin:14px 0 8px}
-.ed-tags2{display:flex;gap:6px;flex-wrap:wrap}
+/* ── 편집기 (오버레이 모달) ── */
+.ed-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px;z-index:100}
+.ed-overlay[hidden]{display:none}
+.ed-modal{background:var(--card);border:1px solid var(--line);border-radius:14px;width:100%;max-width:360px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+.ed-head{display:flex;align-items:center;gap:8px;padding:16px 16px 14px;border-bottom:1px solid var(--line);flex-shrink:0}
+.ed-title{font-size:15px;font-weight:700}
+.ed-coll{font-size:12px;color:var(--muted);background:var(--chip);padding:3px 9px;border-radius:999px}
+.ed-x{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;display:inline-flex;border-radius:6px}
+.ed-x:hover{color:var(--ink);background:var(--hover)}
+.ed-body{padding:16px;overflow:auto}
+.ed-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.ed-sub{font-size:12px;color:var(--muted);margin:0 0 9px}
+.ed-tags2{display:flex;gap:7px;flex-wrap:wrap}
 .ed-tag{
-  font-size:12px;padding:3px 7px 3px 11px;border-radius:6px;
-  border:1px solid var(--line);background:var(--chip);color:var(--muted);
+  font-size:12px;padding:5px 7px 5px 11px;border-radius:8px;
+  background:var(--chip);color:var(--ink);
   display:inline-flex;align-items:center;gap:6px;
 }
-.ed-rm{font-size:15px;cursor:pointer;color:var(--faint);background:none;border:none;padding:0;line-height:1}
+.ed-rm{font-size:14px;cursor:pointer;color:var(--faint);background:none;border:none;padding:0;line-height:1}
 .ed-rm:hover{color:var(--ink)}
 .ed-empty{font-size:12px;color:var(--faint)}
-.ed-addbar{margin-top:12px}
-.gh-row{margin-top:16px}
+.ed-add-sec{border-top:1px solid var(--line);margin-top:20px;padding-top:16px}
+.ed-search{position:relative;margin-bottom:11px}
+.ed-search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--faint)}
+.ed-search input{height:32px;font-size:13px;padding-left:30px}
+.gh-row{margin-top:18px}
 .gh-row input{font-size:13px;padding:8px 10px}
-.save-row{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
-.save-msg{font-size:12px;flex:1}
+.ed-foot{display:flex;align-items:center;gap:8px;padding:14px 16px;border-top:1px solid var(--line);background:var(--chip);flex-shrink:0}
+.ed-foot-r{display:flex;gap:8px;margin-left:auto}
+.save-msg{font-size:12px}
 .save-msg.ok{color:#1E7A4B}.save-msg.err{color:#B94040}
-
-/* 제목 일괄 정리 */
-.tools-sec{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
-.tools-title{font-size:13px;font-weight:700;color:var(--ink);margin:0 0 12px}
-.tools-desc{font-size:12px;color:var(--faint);margin-bottom:10px;line-height:1.5}
 .fix-msg{font-size:13px;margin:10px 0 6px}
 .fix-sample{font-size:12px;color:var(--muted);margin-bottom:8px;word-break:break-all}
 .fix-warn{font-size:12px;color:#B96512;background:var(--tag-bg);padding:9px 11px;border-radius:8px;margin:10px 0;line-height:1.5}
@@ -214,6 +223,7 @@ button:disabled{opacity:.4;cursor:default}
 .modal-body{padding:16px;display:flex;flex-direction:column;gap:13px}
 .modal-body label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
 .modal-body textarea{width:100%;min-height:58px;resize:vertical;font-family:"Pretendard",sans-serif;font-size:14px;padding:9px 11px;border:1px solid var(--line2);border-radius:8px;background:var(--chip);color:var(--ink);outline:none}
+.modal-body select{font-size:14px;padding:9px 11px;border:1px solid var(--line2);border-radius:8px}
 .modal-body textarea:focus,.modal-body input:focus,.modal-body select:focus{border-color:var(--ink)}
 .tag-edit{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .tag-chip{font-size:12px;padding:5px 6px 5px 11px;border-radius:999px;background:var(--sel-bg);color:var(--sel-fg);display:inline-flex;align-items:center;gap:5px}
@@ -245,6 +255,9 @@ button:disabled{opacity:.4;cursor:default}
       </button>
       <button class="icon-btn hidden" id="editBtn" title="태그 그룹 편집">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="3" y1="5" x2="13" y2="5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="6" cy="5" r="1.8" fill="var(--card)" stroke="currentColor" stroke-width="1.3"/><line x1="3" y1="11" x2="13" y2="11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="10" cy="11" r="1.8" fill="var(--card)" stroke="currentColor" stroke-width="1.3"/></svg>
+      </button>
+      <button class="icon-btn hidden" id="toolsBtn" title="제목 일괄 정리">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10.5 2.5a3 3 0 0 0-3.8 3.9l-4 4a1.2 1.2 0 0 0 1.7 1.7l4-4a3 3 0 0 0 3.9-3.8l-1.8 1.8-1.5-.4-.4-1.5 1.9-1.8z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
       </button>
       <button class="icon-btn" id="lockBtn" title="토큰 설정">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2.7" y="7.3" width="10.6" height="6.7" rx="1.6" stroke="currentColor" stroke-width="1.3"/><path d="M5.2 7.3V5.2C5.2 3.7 6.5 2.3 8 2.3C9.5 2.3 10.8 3.7 10.8 5.2V7.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -284,25 +297,41 @@ button:disabled{opacity:.4;cursor:default}
     <div class="active-filters" id="activeFilters"></div>
   </div>
 
-  <div class="editor-wrap hidden" id="editorWrap">
-    <div class="editor-hdr">
-      <h2 id="edTitle">태그 그룹</h2>
-      <button class="sm" id="closeEditorBtn">닫기</button>
+  <div class="ed-overlay" id="editorWrap" hidden>
+    <div class="ed-modal" role="dialog" aria-modal="true">
+      <div class="ed-head">
+        <span class="ed-title">태그 그룹</span>
+        <span class="ed-coll" id="edColl"></span>
+        <button class="ed-x" id="closeEditorBtn" aria-label="닫기"><svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M4.5 4.5l8 8M12.5 4.5l-8 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
+      </div>
+      <div class="ed-body">
+        <div class="ed-tabs" id="edCats"></div>
+        <div id="edPanel"></div>
+        <div class="gh-row hidden" id="ghRow">
+          <input id="ghInput" type="password" placeholder="GitHub PAT (저장에 필요, repo 권한)" autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+      <div class="ed-foot">
+        <button class="btn-danger" id="delCatBtn">삭제</button>
+        <span class="save-msg" id="saveMsg"></span>
+        <div class="ed-foot-r">
+          <button id="closeEditorBtn2">닫기</button>
+          <button class="primary" id="saveBtn">저장</button>
+        </div>
+      </div>
     </div>
-    <div class="ed-cats" id="edCats"></div>
-    <div id="edPanel"></div>
-    <div class="gh-row" id="ghRow">
-      <input id="ghInput" type="password" placeholder="GitHub PAT (저장에 필요, repo 권한)" autocomplete="off" spellcheck="false">
-    </div>
-    <div class="save-row">
-      <button class="primary sm" id="saveBtn">GitHub에 저장</button>
-      <span class="save-msg" id="saveMsg"></span>
-    </div>
+  </div>
 
-    <div class="tools-sec">
-      <div class="tools-title">제목 일괄 정리</div>
-      <button class="primary sm" id="fixTitlesBtn">대상 찾기</button>
-      <div id="fixPreview"></div>
+  <div class="ed-overlay" id="toolsWrap" hidden>
+    <div class="ed-modal" role="dialog" aria-modal="true">
+      <div class="ed-head">
+        <span class="ed-title">제목 일괄 정리</span>
+        <button class="ed-x" id="closeToolsBtn" aria-label="닫기"><svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M4.5 4.5l8 8M12.5 4.5l-8 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
+      </div>
+      <div class="ed-body">
+        <button class="primary sm" id="fixTitlesBtn">대상 찾기</button>
+        <div id="fixPreview"></div>
+      </div>
     </div>
   </div>
 
@@ -342,7 +371,7 @@ let ALL=[], filtered=[], shown=0;
 let curCollId=null, curCollTitle="";
 let tagGroups={}, configSha=null;
 let tagState={}, kw="", activeCat=null;
-let edCat=null; const edSel=new Set();
+let edCat=null; const edSel=new Set(); let edSearch="";
 let COLLECTIONS=[], modalItem=null, modalTags=[];
 const collCache={}, synCache={}, inflight={};
 
@@ -488,7 +517,7 @@ async function loadAll(id,title,forceRefresh) {
   ALL=[];filtered=[];shown=0;
   $("#mainPanel").classList.add("hidden");
   $("#grid").innerHTML=""; $("#moreBtn").hidden=true;
-  $("#editBtn").classList.add("hidden");
+  $("#editBtn").classList.add("hidden"); $("#toolsBtn").classList.add("hidden");
   $("#prog").classList.remove("hidden");
   $("#prog").firstElementChild.style.width="0";
   $("#loadMsg").textContent=`${title} 불러오는 중…`;
@@ -514,7 +543,7 @@ async function loadAll(id,title,forceRefresh) {
 function afterLoad(){
   buildFilter();
   $("#mainPanel").classList.remove("hidden");
-  $("#editBtn").classList.remove("hidden");
+  $("#editBtn").classList.remove("hidden"); $("#toolsBtn").classList.remove("hidden");
   applyFilter();
 }
 
@@ -649,44 +678,51 @@ function renderMore() {
 // ── 편집기 ──
 function openEditor() {
   if(GH_TOKEN) $("#ghInput").value=GH_TOKEN;
-  $("#ghRow").classList.toggle("hidden", !!GH_TOKEN);  // 이미 저장돼 있으면 입력칸 숨김
-  edCat=null; edSel.clear();
+  $("#ghRow").classList.toggle("hidden", !!GH_TOKEN);  // 토큰 저장돼 있으면 입력칸 숨김
+  edCat=null; edSearch=""; $("#saveMsg").textContent="";
   renderEditor();
-  $("#editorWrap").classList.toggle("hidden");
+  $("#editorWrap").hidden=false;
 }
+function closeEditor(){ $("#editorWrap").hidden=true; buildFilter(); applyFilter(); }
+function openTools(){ $("#fixPreview").innerHTML=""; $("#toolsWrap").hidden=false; }
+function closeTools(){ $("#toolsWrap").hidden=true; }
+
 function renderEditor() {
-  $("#edTitle").textContent = curCollTitle ? `태그 그룹 · ${curCollTitle}` : "태그 그룹";
-  const catsHost=$("#edCats"), panel=$("#edPanel");
-  catsHost.innerHTML=""; panel.innerHTML="";
+  $("#edColl").textContent = curCollTitle || "";
+  const tabsHost=$("#edCats"), panel=$("#edPanel"), delBtn=$("#delCatBtn");
+  tabsHost.innerHTML=""; panel.innerHTML="";
 
   if(!isEditableColl()){
-    panel.innerHTML='<div class="ed-empty">All / Unsorted는 합쳐 보기 전용이야. 편집하려면 특정 컬렉션(🔗 516 archive, 🔗 연성 등)을 불러와줘.</div>';
+    tabsHost.style.display="none";
+    delBtn.style.visibility="hidden";
+    panel.innerHTML='<div class="ed-empty">All / Unsorted는 합쳐 보기 전용이야. 특정 컬렉션(🔗 516 archive, 🔗 연성 등)을 불러와 편집해줘.</div>';
     return;
   }
+  tabsHost.style.display="flex";
 
-  const cats=curCats();                 // 이 컬렉션의 {대분류:[태그]}
+  const cats=curCats();
   const ct=tagCounts();
 
   Object.keys(cats).forEach(name=>{
     const b=el("button","cat-chip"+(edCat===name?" sel":""));
     b.innerHTML=esc(name)+`<span class="coll-count">${cats[name].length}</span>`;
-    b.onclick=()=>{edCat=edCat===name?null:name;edSel.clear();renderEditor();};
-    catsHost.appendChild(b);
+    b.onclick=()=>{edCat=edCat===name?null:name; edSearch=""; renderEditor();};
+    tabsHost.appendChild(b);
   });
-  const addCat=el("button","cat-chip","+ 카테고리");
-  addCat.style.borderStyle="dashed";
+  const addCat=el("button","cat-chip","+ 카테고리"); addCat.style.borderStyle="dashed";
   addCat.onclick=()=>{
     const n=(prompt("새 대분류 이름")||"").trim();
     if(!n) return;
     if(!cats[n]) cats[n]=[];
-    edCat=n; edSel.clear(); renderEditor();
+    edCat=n; edSearch=""; renderEditor();
   };
-  catsHost.appendChild(addCat);
+  tabsHost.appendChild(addCat);
 
+  delBtn.style.visibility = edCat ? "visible" : "hidden";
   if(!edCat) return;
 
-  // 현재 태그
-  panel.appendChild(el("div","ed-sub","현재 태그"));
+  // 이 그룹의 태그
+  panel.appendChild(el("div","ed-sub","이 그룹의 태그"));
   const cur=el("div","ed-tags2");
   const list=cats[edCat]||[];
   if(!list.length) cur.appendChild(el("span","ed-empty","아직 없음"));
@@ -694,39 +730,37 @@ function renderEditor() {
     const tag=el("span","ed-tag");
     tag.appendChild(el("span",null,t+(ct[t]?` ${ct[t]}`:"")));
     const rm=el("button","ed-rm","×");
-    rm.onclick=()=>{cats[edCat].splice(ti,1);renderEditor();};
+    rm.onclick=()=>{cats[edCat].splice(ti,1); renderEditor();};
     tag.appendChild(rm); cur.appendChild(tag);
   });
   panel.appendChild(cur);
 
-  // 미분류 → 추가
+  // 미분류 → 눌러서 추가
   const assigned=new Set(Object.values(cats).flat());
   const unassigned=Object.keys(ct).filter(t=>!assigned.has(t)).sort((a,b)=>ct[b]-ct[a]);
-  if(unassigned.length){
-    panel.appendChild(el("div","ed-sub","추가할 태그 (미분류)"));
-    const pool=el("div","ed-tags2");
-    unassigned.forEach(t=>{
-      const b=el("button","tg"+(edSel.has(t)?" inc":""));
+  const sec=el("div","ed-add-sec");
+  sec.appendChild(el("div","ed-sub","미분류 태그"));
+  const sb=el("div","ed-search");
+  sb.innerHTML=`<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.3"/><path d="M9.2 9.2L12 12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`;
+  const si=el("input"); si.type="search"; si.placeholder="검색"; si.value=edSearch; si.autocomplete="off";
+  sb.appendChild(si); sec.appendChild(sb);
+  const pool=el("div","ed-tags2");
+  function fillPool(){
+    pool.innerHTML="";
+    const q=edSearch.trim().toLowerCase();
+    const shown=unassigned.filter(t=>!q||t.toLowerCase().includes(q));
+    if(!shown.length){ pool.appendChild(el("span","ed-empty", unassigned.length?"검색 결과 없음":"미분류 태그 없음")); return; }
+    shown.forEach(t=>{
+      const b=el("button","tg");
       b.innerHTML=esc(t)+`<span class="c">${ct[t]}</span>`;
-      b.onclick=()=>{
-        if(edSel.has(t)){edSel.delete(t);b.className="tg";}
-        else{edSel.add(t);b.className="tg inc";}
-        const ab=$("#edAddBtn"); if(ab) ab.textContent=`선택한 ${edSel.size}개 추가`;
-      };
+      b.onclick=()=>{ cats[edCat].push(t); renderEditor(); };  // 클릭 즉시 현재 그룹에 추가
       pool.appendChild(b);
     });
-    panel.appendChild(pool);
-    const bar=el("div","ed-addbar");
-    const add=el("button","sm primary",`선택한 ${edSel.size}개 추가`); add.id="edAddBtn";
-    add.onclick=()=>{ if(!edSel.size) return; edSel.forEach(t=>cats[edCat].push(t)); edSel.clear(); renderEditor(); };
-    bar.appendChild(add); panel.appendChild(bar);
   }
-
-  // 카테고리 삭제
-  const delBar=el("div","ed-addbar");
-  const del=el("button","sm","이 카테고리 삭제");
-  del.onclick=()=>{ if(confirm(`'${edCat}' 대분류를 삭제할까? (태그는 미분류로 돌아감)`)){ delete cats[edCat]; edCat=null; renderEditor(); } };
-  delBar.appendChild(del); panel.appendChild(delBar);
+  si.oninput=()=>{ edSearch=si.value; fillPool(); };
+  fillPool();
+  sec.appendChild(pool);
+  panel.appendChild(sec);
 }
 
 // ── 파싱/Syn ──
@@ -811,13 +845,13 @@ function card(it) {
   footRight.appendChild(a);
   foot.appendChild(footRight); c.appendChild(foot);
 
-  const handleOnly=tw&&!/\(/.test(it.title||"");
-  if(tw&&(!rawCover||!tw.handle||handleOnly)){
+  const needName = tw && ["empty","handle","url"].includes(titleState(it,tw));
+  if(tw&&(!rawCover||!tw.handle||needName)){
     ensureSyn().then(v=>{
       if(!coverDone&&!rawCover&&v.cover) setImg(v.cover);
       const handle=tw.handle||v.handle||"";
       if(handle) a.href=`https://x.com/${handle}/status/${tw.id}`;
-      if(handleOnly&&v.name) nameEl.textContent=`${v.name} (@${handle})`;
+      if(needName&&v.name) nameEl.textContent=`${v.name} (@${handle})`;
     });
   }
   return c;
@@ -1001,14 +1035,12 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
 function titleState(it,tw){
   const t=(it.title||"").trim();
-  if(!t) return "empty";
   if(/\s\(@[^)]+\)$/.test(t)) return "ok";        // '닉네임 (@핸들)' 완성형
   if(/\S\(@[^)]+\)$/.test(t)) return "nospace";   // '닉네임(@핸들)' 공백만 없음
+  if(!t) return "empty";
   if(t.startsWith("@")) return "handle";
-  if(/^https?:\/\//i.test(t)) return "url";
-  if(/^(www\.)?(x|twitter|mobile\.twitter)\.com(\/|$)/i.test(t)) return "url";
-  if(tw&&tw.handle&&t.toLowerCase()===tw.handle.toLowerCase()) return "handle";
-  return "ok";
+  if(/^https?:\/\//i.test(t)||/^(www\.)?(x|twitter|mobile\.twitter)\.com(\/|$)/i.test(t)) return "url";
+  return "fill";   // 본문텍스트 등 그 외 전부 → syndication으로 채울 대상
 }
 
 function findFixTargets(){
@@ -1038,8 +1070,8 @@ async function previewFix(){
   host.innerHTML='<div class="fix-msg">대상 찾는 중…</div>';
   findFixTargets();
   if(!fixTargets.length){ host.innerHTML='<div class="fix-msg">정리할 항목이 없어 (이 컬렉션 기준).</div>'; return; }
-  const by={empty:0,url:0,handle:0,nospace:0};
-  fixTargets.forEach(t=>by[t.st]++);
+  const nospaceN=fixTargets.filter(t=>t.st==="nospace").length;
+  const fillN=fixTargets.length-nospaceN;
 
   // 샘플 5개 실제 before→after
   const sample=fixTargets.slice(0,5);
@@ -1049,7 +1081,7 @@ async function previewFix(){
   }));
 
   host.innerHTML=`
-    <div class="fix-msg">대상 <b>${fixTargets.length}</b>개 — 비어있음 ${by.empty} · 링크형 ${by.url} · 핸들만 ${by.handle} · 공백없음 ${by.nospace}</div>
+    <div class="fix-msg">대상 <b>${fixTargets.length}</b>개 — 닉네임 채우기 ${fillN} · 공백만 삽입 ${nospaceN}</div>
     <div class="fix-pairs">${pairs.map(p=>`<div class="fix-pair">${esc(p.cur)} → <b>${esc(p.nt)}</b></div>`).join("")}</div>
     <div class="fix-warn">⚠ 실행하면 이 ${fixTargets.length}개의 제목을 레인드롭에 실제로 덮어써. 이미 '닉네임 (@핸들)' 형식은 안 건드림. syndication 실패(삭제·보호)는 건너뜀. 1개당 ~0.6초, 약 ${Math.ceil(fixTargets.length*0.6/60)}분.</div>
     <button class="primary" id="runFixBtn">${fixTargets.length}개 제목 수정 실행</button>`;
@@ -1126,7 +1158,18 @@ let kwTimer;
 $("#kw").addEventListener("input",e=>{kw=e.target.value;clearTimeout(kwTimer);kwTimer=setTimeout(()=>{applyFilter();},120);});
 $("#resetBtn").onclick=()=>{tagState={};kw="";activeCat=null;const k=$("#kw");if(k)k.value="";buildFilter();applyFilter();};
 $("#editBtn").onclick=openEditor;
-$("#closeEditorBtn").onclick=()=>{$("#editorWrap").classList.add("hidden");buildFilter();};
+$("#closeEditorBtn").onclick=closeEditor;
+$("#closeEditorBtn2").onclick=closeEditor;
+$("#editorWrap").addEventListener("click",e=>{ if(e.target===$("#editorWrap")) closeEditor(); });
+$("#delCatBtn").onclick=()=>{
+  if(!edCat) return;
+  if(confirm(`'${edCat}' 대분류를 삭제할까? (태그는 미분류로 돌아감)`)){
+    const cats=curCats(); delete cats[edCat]; edCat=null; renderEditor();
+  }
+};
+$("#toolsBtn").onclick=openTools;
+$("#closeToolsBtn").onclick=closeTools;
+$("#toolsWrap").addEventListener("click",e=>{ if(e.target===$("#toolsWrap")) closeTools(); });
 $("#saveBtn").onclick=async()=>{
   const btn=$("#saveBtn"),msgEl=$("#saveMsg");
   btn.disabled=true; msgEl.className="save-msg"; msgEl.textContent="저장 중…";
@@ -1137,7 +1180,12 @@ $("#saveBtn").onclick=async()=>{
 $("#moreBtn").onclick=renderMore;
 $("#sortSel").onchange=e=>{ sortMode=e.target.value; applyFilter(); };
 $("#fixTitlesBtn").onclick=previewFix;
-document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&M&&!M.ov.hidden) closeModal(); });
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Escape") return;
+  if(M&&!M.ov.hidden) closeModal();
+  else if(!$("#toolsWrap").hidden) closeTools();
+  else if(!$("#editorWrap").hidden) closeEditor();
+});
 
 if(TOKEN){$("#tokInput").value=TOKEN;connect();}
 </script>
