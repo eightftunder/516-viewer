@@ -848,6 +848,14 @@ function openModal(it){
   modalItem=it;
   modalTags=[...(it.tags||[])];
   M.title.value=it.title||"";
+  // 카드에 보이는 해석된 제목으로 미리 채우기 (원본이 @핸들/x.com/공백없음일 때)
+  const twM=parseTweet(it.link);
+  if(twM){
+    const st=titleState(it,twM);
+    if(st!=="ok"){
+      computeNewTitle(it,twM,st).then(nt=>{ if(nt && modalItem===it && M.title.value===(it.title||"")) M.title.value=nt; });
+    }
+  }
   M.note.value=noteOf(it);
   // 컬렉션 드롭다운
   const cur=it.collectionId||(it.collection&&it.collection.$id);
