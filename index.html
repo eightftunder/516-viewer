@@ -773,9 +773,10 @@ function renderEditor() {
   });
   panel.appendChild(cur);
 
-  // 미분류 → 눌러서 추가
+  // 미분류 → 눌러서 추가 (계정 전체 태그 풀 기준: 다른 컬렉션 태그도 포함)
   const assigned=new Set(Object.values(cats).flat());
-  const unassigned=Object.keys(ct).filter(t=>!assigned.has(t)).sort((a,b)=>ct[b]-ct[a]);
+  const allTags=[...new Set([...allTagPool, ...Object.keys(ct)])];
+  const unassigned=allTags.filter(t=>!assigned.has(t)).sort((a,b)=>(ct[b]||0)-(ct[a]||0) || a.localeCompare(b));
   const sec=el("div","ed-add-sec");
   sec.appendChild(el("div","ed-sub","미분류 태그"));
   const sb=el("div","ed-search");
@@ -790,7 +791,7 @@ function renderEditor() {
     if(!shown.length){ pool.appendChild(el("span","ed-empty", unassigned.length?"검색 결과 없음":"미분류 태그 없음")); return; }
     shown.forEach(t=>{
       const b=el("button","tg");
-      b.innerHTML=esc(t)+`<span class="c">${ct[t]}</span>`;
+      b.innerHTML=esc(t)+(ct[t]?`<span class="c">${ct[t]}</span>`:"");
       b.onclick=()=>{ cats[edCat].push(t); renderEditor(); };  // 클릭 즉시 현재 그룹에 추가
       pool.appendChild(b);
     });
