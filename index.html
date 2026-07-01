@@ -257,7 +257,7 @@ button:disabled{opacity:.4;cursor:default}
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="3" y1="5" x2="13" y2="5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="6" cy="5" r="1.8" fill="var(--card)" stroke="currentColor" stroke-width="1.3"/><line x1="3" y1="11" x2="13" y2="11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="10" cy="11" r="1.8" fill="var(--card)" stroke="currentColor" stroke-width="1.3"/></svg>
       </button>
       <button class="icon-btn hidden" id="toolsBtn" title="제목 일괄 정리">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2.2c.4 2.9 1.7 4.2 4.6 4.6-2.9.4-4.2 1.7-4.6 4.6-.4-2.9-1.7-4.2-4.6-4.6C6.3 6.4 7.6 5.1 8 2.2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2C8.5 5.8 10.2 7.5 14 8C10.2 8.5 8.5 10.2 8 14C7.5 10.2 5.8 8.5 2 8C5.8 7.5 7.5 5.8 8 2Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
       </button>
       <button class="icon-btn" id="lockBtn" title="토큰 설정">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2.7" y="7.3" width="10.6" height="6.7" rx="1.6" stroke="currentColor" stroke-width="1.3"/><path d="M5.2 7.3V5.2C5.2 3.7 6.5 2.3 8 2.3C9.5 2.3 10.8 3.7 10.8 5.2V7.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -918,7 +918,7 @@ function buildModal(){
 
 function openModal(it){
   buildModal();
-  refreshTagPoolFromCache();   // 그동안 불러온 컬렉션 태그까지 자동완성에 반영
+  refreshTagPoolFromCache(); loadAllTags();   // 자동완성 태그 풀 최신화 (캐시 + API 재시도)
   modalItem=it;
   modalTags=[...(it.tags||[])];
   M.title.value=it.title||"";
@@ -962,7 +962,7 @@ function renderModalTags(){
   const sug=el("div","tag-suggest"); sug.hidden=true;
   wrap.appendChild(inp); wrap.appendChild(sug); host.appendChild(wrap);
 
-  const allTags=[...new Set([...allTagPool, ...Object.keys(tagCounts())])];  // 계정 전체 + 현재 컬렉션
+  function currentPool(){ return [...new Set([...allTagPool, ...Object.keys(tagCounts())])]; }  // 계정 전체 + 현재 컬렉션 (매번 최신)
   let active=-1;
 
   function highlight(){
@@ -973,7 +973,7 @@ function renderModalTags(){
     const q=inp.value.trim().toLowerCase();
     sug.innerHTML=""; active=-1;
     if(!q){ sug.hidden=true; return; }
-    const matches=allTags.filter(t=>t.toLowerCase().includes(q)&&!modalTags.includes(t)).slice(0,8);
+    const matches=currentPool().filter(t=>t.toLowerCase().includes(q)&&!modalTags.includes(t)).slice(0,8);
     if(!matches.length){ sug.hidden=true; return; }
     matches.forEach(t=>{
       const d=el("div",null,t);
