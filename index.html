@@ -143,7 +143,6 @@ button:disabled{opacity:.4;cursor:default}
 
 /* ── 편집기 (오버레이 모달) ── */
 .ed-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px;z-index:100}
-.ed-overlay[hidden]{display:none}
 .ed-modal{background:var(--card);border:1px solid var(--line);border-radius:14px;width:100%;max-width:360px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
 .ed-head{display:flex;align-items:center;gap:8px;padding:16px 16px 14px;border-bottom:1px solid var(--line);flex-shrink:0}
 .ed-title{font-size:15px;font-weight:700}
@@ -257,7 +256,7 @@ button:disabled{opacity:.4;cursor:default}
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="3" y1="5" x2="13" y2="5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="6" cy="5" r="1.8" fill="var(--card)" stroke="currentColor" stroke-width="1.3"/><line x1="3" y1="11" x2="13" y2="11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="10" cy="11" r="1.8" fill="var(--card)" stroke="currentColor" stroke-width="1.3"/></svg>
       </button>
       <button class="icon-btn hidden" id="toolsBtn" title="제목 일괄 정리">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10.5 2.5a3 3 0 0 0-3.8 3.9l-4 4a1.2 1.2 0 0 0 1.7 1.7l4-4a3 3 0 0 0 3.9-3.8l-1.8 1.8-1.5-.4-.4-1.5 1.9-1.8z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M7 2.4c.35 2.6 1.6 3.85 4.2 4.2-2.6.35-3.85 1.6-4.2 4.2-.35-2.6-1.6-3.85-4.2-4.2C5.4 6.25 6.65 5 7 2.4z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><circle cx="12.2" cy="11.8" r=".95" fill="currentColor"/></svg>
       </button>
       <button class="icon-btn" id="lockBtn" title="토큰 설정">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2.7" y="7.3" width="10.6" height="6.7" rx="1.6" stroke="currentColor" stroke-width="1.3"/><path d="M5.2 7.3V5.2C5.2 3.7 6.5 2.3 8 2.3C9.5 2.3 10.8 3.7 10.8 5.2V7.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -297,7 +296,7 @@ button:disabled{opacity:.4;cursor:default}
     <div class="active-filters" id="activeFilters"></div>
   </div>
 
-  <div class="ed-overlay" id="editorWrap" hidden>
+  <div class="ed-overlay hidden" id="editorWrap">
     <div class="ed-modal" role="dialog" aria-modal="true">
       <div class="ed-head">
         <span class="ed-title">태그 그룹</span>
@@ -322,7 +321,7 @@ button:disabled{opacity:.4;cursor:default}
     </div>
   </div>
 
-  <div class="ed-overlay" id="toolsWrap" hidden>
+  <div class="ed-overlay hidden" id="toolsWrap">
     <div class="ed-modal" role="dialog" aria-modal="true">
       <div class="ed-head">
         <span class="ed-title">제목 일괄 정리</span>
@@ -681,11 +680,11 @@ function openEditor() {
   $("#ghRow").classList.toggle("hidden", !!GH_TOKEN);  // 토큰 저장돼 있으면 입력칸 숨김
   edCat=null; edSearch=""; $("#saveMsg").textContent="";
   renderEditor();
-  $("#editorWrap").hidden=false;
+  $("#editorWrap").classList.remove("hidden");
 }
-function closeEditor(){ $("#editorWrap").hidden=true; buildFilter(); applyFilter(); }
-function openTools(){ $("#fixPreview").innerHTML=""; $("#toolsWrap").hidden=false; }
-function closeTools(){ $("#toolsWrap").hidden=true; }
+function closeEditor(){ $("#editorWrap").classList.add("hidden"); buildFilter(); applyFilter(); }
+function openTools(){ $("#fixPreview").innerHTML=""; $("#toolsWrap").classList.remove("hidden"); }
+function closeTools(){ $("#toolsWrap").classList.add("hidden"); }
 
 function renderEditor() {
   $("#edColl").textContent = curCollTitle || "";
@@ -1183,8 +1182,8 @@ $("#fixTitlesBtn").onclick=previewFix;
 document.addEventListener("keydown",e=>{
   if(e.key!=="Escape") return;
   if(M&&!M.ov.hidden) closeModal();
-  else if(!$("#toolsWrap").hidden) closeTools();
-  else if(!$("#editorWrap").hidden) closeEditor();
+  else if(!$("#toolsWrap").classList.contains("hidden")) closeTools();
+  else if(!$("#editorWrap").classList.contains("hidden")) closeEditor();
 });
 
 if(TOKEN){$("#tokInput").value=TOKEN;connect();}
