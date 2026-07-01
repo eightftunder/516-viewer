@@ -117,6 +117,9 @@ button:disabled{opacity:.4;cursor:default}
 
 /* ── 필터 2단 ── */
 .filter-bar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.kw-modes{display:flex;gap:6px;margin-bottom:var(--gap)}
+.kw-mode{font-size:11px;font-family:"Pretendard",sans-serif;font-weight:600;padding:4px 12px;border-radius:999px;border:1px solid var(--line2);background:var(--chip);color:var(--muted);cursor:pointer}
+.kw-mode.sel{background:var(--sel-bg);border-color:var(--sel-bg);color:var(--sel-fg)}
 .cat-chip{
   font-size:12px;font-family:"Pretendard",sans-serif;font-weight:600;
   padding:5px 13px;border-radius:999px;
@@ -286,7 +289,7 @@ button:disabled{opacity:.4;cursor:default}
 
   <div class="hidden" id="mainPanel">
     <div class="search-row">
-      <div class="kw-wrap"><input id="kw" type="search" placeholder="and:태그  or:태그  -태그  note:단어" autocomplete="off"><div class="tag-suggest" id="kwSug" hidden></div></div>
+      <div class="kw-wrap"><input id="kw" type="search" placeholder="태그 검색 · -제외 · or:묶음 · note:텍스트" autocomplete="off"><div class="tag-suggest" id="kwSug" hidden></div></div>
       <select id="sortSel" class="sort-sel">
         <option value="saved-desc">저장 최신순</option>
         <option value="saved-asc">저장 오래된순</option>
@@ -294,6 +297,11 @@ button:disabled{opacity:.4;cursor:default}
         <option value="post-asc">포스트 오래된순</option>
       </select>
       <span class="count-pill" id="resultCount"></span>
+    </div>
+    <div class="kw-modes" id="kwModes">
+      <button class="kw-mode sel" data-mode="and">태그</button>
+      <button class="kw-mode" data-mode="or">또는</button>
+      <button class="kw-mode" data-mode="not">제외</button>
     </div>
     <div class="filter-bar" id="filterBar"></div>
     <div class="tag-row" id="tagRow"></div>
@@ -374,6 +382,7 @@ let ALL=[], filtered=[], shown=0;
 let curCollId=null, curCollTitle="";
 let tagGroups={}, configSha=null;
 let tagState={}, kw="", activeCat=null;
+let kwMode="and";   // 검색창 모드칩: and(태그)/or(또는)/not(제외) — 드롭다운 선택 시 접두사 결정
 let edCat=null; const edSel=new Set(); let edSearch="";
 let edRecentTags=(()=>{try{return JSON.parse(store.get("ed_recent")||"[]")}catch(e){return[]}})();
 function pushRecentTag(t){ edRecentTags=[t,...edRecentTags.filter(x=>x!==t)].slice(0,20); try{store.set("ed_recent",JSON.stringify(edRecentTags));}catch(e){} }
@@ -716,7 +725,9 @@ function splitQ(raw){
 function parseQuery(raw){
   const pool=[...new Set([...allTagPool, ...Object.keys(tagCounts())])].filter(Boolean);
   const tagLookup=new Map(pool.map(t=>[t.toLowerCase(),t]));
-  const incTags=[],excTags=[],orTags=[],textTokens=[];
+  const incTags=[],excTags=[],orGroups=[],textTokens=[];
+  let curOr=null;
+  const closeOr=()=>{ if(curOr&&curOr.length) orGroups.push([...new Set(curOr)]); curOr=null; };
   for(const tk of splitQ(raw)){
     let pre="", val=tk;
     const mm=tk.match(/^(and|or|not|note):(.*)$/i);
@@ -724,16 +735,18 @@ function parseQuery(raw){
     else if(tk[0]==="-"&&tk.length>1){ pre="not"; val=tk.slice(1); }
     val=val.trim(); if(!val) continue;
     const tag=tagLookup.get(val.toLowerCase());
-    if(pre==="note") textTokens.push(val);
-    else if(pre==="and"){ tag?incTags.push(tag):textTokens.push(val); }
-    else if(pre==="or"){ if(tag) orTags.push(tag); }
+    if(pre==="or"){ if(!curOr) curOr=[]; if(tag) curOr.push(tag); continue; }  // 연속 or: → 한 묶음
+    closeOr();                                     // or: 아닌 토큰은 열린 OR 묶음을 닫음
+    if(pre==="and"){ tag?incTags.push(tag):textTokens.push(val); }
     else if(pre==="not"){ if(tag) excTags.push(tag); }
-    else textTokens.push(val);                 // 접두사 없음 → 텍스트
+    else if(pre==="note"){ textTokens.push(val); }
+    else { tag?incTags.push(tag):textTokens.push(val); }   // bare: 태그면 포함, 아니면 텍스트
   }
-  return {incTags:[...new Set(incTags)],excTags:[...new Set(excTags)],orTags:[...new Set(orTags)],kwText:textTokens.join(" ")};
+  closeOr();
+  return {incTags:[...new Set(incTags)],excTags:[...new Set(excTags)],orGroups,kwText:textTokens.join(" ")};
 }
 function applyFilter() {
-  const {incTags:qInc,excTags:qExc,orTags,kwText}=parseQuery(kw);
+  const {incTags:qInc,excTags:qExc,orGroups,kwText}=parseQuery(kw);
   const inc=[...new Set([...Object.keys(tagState).filter(t=>tagState[t]==="inc"), ...qInc])];
   const exc=[...new Set([...Object.keys(tagState).filter(t=>tagState[t]==="exc"), ...qExc])];
   const q=kwText.trim().toLowerCase();
@@ -742,7 +755,7 @@ function applyFilter() {
     const tags=it.tags||[];
     if(inc.length&&!inc.every(t=>tags.includes(t))) return false;
     if(exc.some(t=>tags.includes(t))) return false;
-    if(orTags.length&&!orTags.some(t=>tags.includes(t))) return false;
+    if(orGroups.length&&!orGroups.every(g=>g.some(t=>tags.includes(t)))) return false;
     if(kwToks.length){const hay=((it.title||"")+" "+noteOf(it)).toLowerCase();if(!kwToks.every(w=>hay.includes(w))) return false;}
     return true;
   });
@@ -1284,9 +1297,13 @@ let kwTimer;
   }
   function pick(t){
     const {prefix,pre}=frags();
-    const p = pre || "and:";                        // 접두사 없이 고르면 기본 포함(and:)
     const val = /\s/.test(t) ? `"${t}"` : t;         // 공백 있는 태그는 따옴표
-    inp.value = prefix + p + val + " ";
+    let ins;
+    if(pre) ins=pre+val;                             // 직접 접두사 침 → 유지
+    else if(kwMode==="or") ins="or:"+val;
+    else if(kwMode==="not") ins="-"+val;
+    else ins=val;                                    // 태그 모드 = 맨태그(포함)
+    inp.value = prefix + ins + " ";
     kw=inp.value; sug.hidden=true; active=-1;
     inp.focus(); applyFilter();
   }
@@ -1295,8 +1312,8 @@ let kwTimer;
     sug.innerHTML=""; active=-1;
     if(pre==="note:"){ sug.hidden=true; return; }    // 텍스트 검색은 자동완성 안 함
     if(!q){ sug.hidden=true; return; }
-    const {incTags,excTags,orTags}=parseQuery(inp.value);
-    const used=new Set([...incTags,...excTags,...orTags]);
+    const {incTags,excTags,orGroups}=parseQuery(inp.value);
+    const used=new Set([...incTags,...excTags,...orGroups.flat()]);
     const ct=tagCounts();
     const pool=[...new Set([...allTagPool, ...Object.keys(ct)])].filter(Boolean);
     const matches=pool.filter(t=>t.toLowerCase().includes(q)&&!used.has(t))
@@ -1319,7 +1336,16 @@ let kwTimer;
   });
   inp.addEventListener("blur",()=>setTimeout(()=>{sug.hidden=true;},150));
 })();
-$("#resetBtn").onclick=()=>{tagState={};kw="";activeCat=null;const k=$("#kw");if(k)k.value="";buildFilter();applyFilter();};
+// 모드 칩: 탭해서 드롭다운 선택 시 붙는 접두사 결정
+$("#kwModes").querySelectorAll(".kw-mode").forEach(btn=>{
+  btn.onclick=()=>{
+    kwMode=btn.dataset.mode;
+    $("#kwModes").querySelectorAll(".kw-mode").forEach(b=>b.classList.toggle("sel",b===btn));
+    $("#kw").focus();
+  };
+});
+function resetKwMode(){ kwMode="and"; $("#kwModes").querySelectorAll(".kw-mode").forEach(b=>b.classList.toggle("sel",b.dataset.mode==="and")); }
+$("#resetBtn").onclick=()=>{tagState={};kw="";activeCat=null;const k=$("#kw");if(k)k.value="";resetKwMode();buildFilter();applyFilter();};
 $("#editBtn").onclick=openEditor;
 $("#closeEditorBtn").onclick=closeEditor;
 $("#closeEditorBtn2").onclick=closeEditor;
