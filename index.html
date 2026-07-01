@@ -256,7 +256,7 @@ button:disabled{opacity:.4;cursor:default}
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="3" y1="5" x2="13" y2="5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="6" cy="5" r="1.8" fill="var(--card)" stroke="currentColor" stroke-width="1.3"/><line x1="3" y1="11" x2="13" y2="11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="10" cy="11" r="1.8" fill="var(--card)" stroke="currentColor" stroke-width="1.3"/></svg>
       </button>
       <button class="icon-btn hidden" id="toolsBtn" title="제목 일괄 정리">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M7 2.4c.35 2.6 1.6 3.85 4.2 4.2-2.6.35-3.85 1.6-4.2 4.2-.35-2.6-1.6-3.85-4.2-4.2C5.4 6.25 6.65 5 7 2.4z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><circle cx="12.2" cy="11.8" r=".95" fill="currentColor"/></svg>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2.2c.4 2.9 1.7 4.2 4.6 4.6-2.9.4-4.2 1.7-4.6 4.6-.4-2.9-1.7-4.2-4.6-4.6C6.3 6.4 7.6 5.1 8 2.2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
       </button>
       <button class="icon-btn" id="lockBtn" title="토큰 설정">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2.7" y="7.3" width="10.6" height="6.7" rx="1.6" stroke="currentColor" stroke-width="1.3"/><path d="M5.2 7.3V5.2C5.2 3.7 6.5 2.3 8 2.3C9.5 2.3 10.8 3.7 10.8 5.2V7.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -372,6 +372,15 @@ let tagGroups={}, configSha=null;
 let tagState={}, kw="", activeCat=null;
 let edCat=null; const edSel=new Set(); let edSearch="";
 let COLLECTIONS=[], modalItem=null, modalTags=[];
+let allTagPool=[];   // 계정 전체 태그 (모달 자동완성용)
+async function loadAllTags(){
+  try{ const c=store.get("rd_alltags"); if(c) allTagPool=JSON.parse(c); }catch(e){}
+  try{
+    const d=await rdApi("/tags");
+    const tags=(d.items||[]).map(t=>t._id).filter(Boolean);
+    if(tags.length){ allTagPool=tags; store.set("rd_alltags",JSON.stringify(tags)); }
+  }catch(e){}
+}
 const collCache={}, synCache={}, inflight={};
 
 const $  = s => document.querySelector(s);
@@ -442,6 +451,7 @@ async function connect() {
     $("#collWrap").classList.remove("hidden");
     await loadConfig();
     renderCollections([...(root.items||[]),...(kids.items||[])]);
+    loadAllTags();   // 계정 전체 태그 캐싱 (모달 자동완성용, 비동기)
   } catch(e) {
     $("#connErr").innerHTML=`<div class="err-msg">${esc(e.message)}</div>`;
   } finally { $("#connectBtn").disabled=false; }
@@ -935,7 +945,7 @@ function renderModalTags(){
   const sug=el("div","tag-suggest"); sug.hidden=true;
   wrap.appendChild(inp); wrap.appendChild(sug); host.appendChild(wrap);
 
-  const allTags=Object.keys(tagCounts());
+  const allTags=[...new Set([...allTagPool, ...Object.keys(tagCounts())])];  // 계정 전체 + 현재 컬렉션
   let active=-1;
 
   function highlight(){
@@ -1001,7 +1011,10 @@ async function saveModal(){
     await rdUpdate(it._id,body);
     if('title' in body) it.title=body.title;
     if('note' in body) it.note=body.note;
-    if('tags' in body) it.tags=[...modalTags];
+    if('tags' in body){ it.tags=[...modalTags];
+      modalTags.forEach(t=>{ if(t&&!allTagPool.includes(t)) allTagPool.push(t); });
+      try{ store.set("rd_alltags",JSON.stringify(allTagPool)); }catch(e){}
+    }
     if(moved){
       it.collectionId=newColl; if(it.collection) it.collection.$id=newColl;
       if(curCollId!==0&&curCollId!==-1&&newColl!==curCollId){ const i=ALL.indexOf(it); if(i>=0) ALL.splice(i,1); }
