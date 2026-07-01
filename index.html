@@ -387,15 +387,28 @@ function refreshTagPoolFromCache(){
   (collCache&&Object.values(collCache)||[]).forEach(items=>(items||[]).forEach(it=>(it.tags||[]).forEach(t=>t&&pool.add(t))));
   allTagPool=[...pool];
 }
+let tagsLoading=false;
 async function loadAllTags(){
-  try{ const c=store.get("rd_alltags"); if(c) allTagPool=JSON.parse(c); }catch(e){}
-  refreshTagPoolFromCache();               // 캐시된 모든 컬렉션 태그 합치기
-  const pool=new Set(allTagPool);
-  for(const p of ["/tags","/tags/0"]){     // 계정 전체 태그 API (되면 사용)
-    try{ const d=await rdApi(p); const tags=(d.items||[]).map(t=>t._id).filter(Boolean); if(tags.length){ tags.forEach(t=>pool.add(t)); break; } }catch(e){}
-  }
-  allTagPool=[...pool];
-  try{ store.set("rd_alltags",JSON.stringify(allTagPool)); }catch(e){}
+  if(tagsLoading) return; tagsLoading=true;              // 중복 실행 방지
+  try{
+    try{ const c=store.get("rd_alltags"); if(c) allTagPool=JSON.parse(c); }catch(e){}
+    refreshTagPoolFromCache();               // 캐시된 모든 컬렉션 태그 합치기
+    const pool=new Set(allTagPool);
+    const before=pool.size;
+    // 1) 계정 전체 태그 API — 되면 한 방에 전부 들어옴
+    let acct=0;
+    for(const p of ["/tags","/tags/0"]){
+      try{ const d=await rdApi(p); const tags=(d.items||[]).map(t=>t._id).filter(Boolean); if(tags.length){ tags.forEach(t=>pool.add(t)); acct=tags.length; break; } }catch(e){}
+    }
+    // 2) 컬렉션별로도 각각 긁어서 합침 — 계정 전체 API가 실패해도 무조건 채워지게
+    let per=0;
+    for(const c of COLLECTIONS){
+      try{ const d=await rdApi("/tags/"+c.id); (d.items||[]).forEach(t=>{ if(t._id){ pool.add(t._id); per++; } }); }catch(e){}
+    }
+    allTagPool=[...pool];
+    try{ store.set("rd_alltags",JSON.stringify(allTagPool)); }catch(e){}
+    console.log(`[516] 태그풀 ${before}→${allTagPool.length} | 계정API ${acct} | 컬렉션(${COLLECTIONS.length}개)에서 ${per}`);
+  } finally { tagsLoading=false; }
 }
 const collCache={}, synCache={}, inflight={};
 
