@@ -725,7 +725,7 @@ function parseQuery(raw){
     if(tk===","){ i++; continue; }                 // 쉼표 = 단순 구분(띄어쓰기와 동일)
     // 여러 단어 태그를 욕심껏 매칭 (연산자 안 넘음)
     let matched=false;
-    for(let win=Math.min(4,tokens.length-i); win>=1; win--){
+    for(let win=Math.min(8,tokens.length-i); win>=1; win--){
       let seg=tokens.slice(i,i+win);
       if(seg.some(s=>s==="/"||s===",")) continue;
       let neg=false;
@@ -1303,8 +1303,7 @@ let kwTimer;
   }
   function pick(t){
     const {prefix,neg}=frags();
-    const val = /\s/.test(t) ? `"${t}"` : t;         // 공백 있는 태그는 따옴표로 감싸 안전하게
-    inp.value = prefix + neg + val + " ";
+    inp.value = prefix + neg + t;   // 따옴표/꼬리공백 없이 태그 그대로 (파서가 여러 단어 태그 자동 인식)
     kw=inp.value; sug.hidden=true; active=-1;
     inp.focus(); applyFilter();
   }
