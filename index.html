@@ -994,6 +994,20 @@ function renderModalTags(){
   const sug=el("div","tag-suggest"); sug.hidden=true;
   wrap.appendChild(inp); wrap.appendChild(sug); host.appendChild(wrap);
 
+  // 최근 사용 태그 알약 (검색 안 해도 바로 누르게)
+  const ct=tagCounts();
+  const recentPool=el("div","ed-tags2");
+  let recent=edRecentTags.filter(t=>!modalTags.includes(t));
+  for(const t of Object.keys(ct)){ if(recent.length>=6) break; if(!recent.includes(t)&&!modalTags.includes(t)) recent.push(t); }
+  recent=recent.slice(0,6);
+  recent.forEach(t=>{
+    const b=el("button","tg");
+    b.innerHTML=esc(t)+(ct[t]?`<span class="c">${ct[t]}</span>`:"");
+    b.onclick=()=>addTag(t);
+    recentPool.appendChild(b);
+  });
+  if(recent.length) host.appendChild(recentPool);
+
   function currentPool(){ return [...new Set([...allTagPool, ...Object.keys(tagCounts())])]; }  // 계정 전체 + 현재 컬렉션 (매번 최신)
   let active=-1;
 
@@ -1016,6 +1030,7 @@ function renderModalTags(){
   }
   function addTag(t){
     t=t.trim(); if(t&&!modalTags.includes(t)) modalTags.push(t);
+    pushRecentTag(t);
     renderModalTags();
     setTimeout(()=>M.tagEdit.querySelector(".tag-input-wrap input")?.focus(),0);
   }
