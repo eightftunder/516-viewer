@@ -53,8 +53,9 @@ body{
 .top-icons{display:flex;align-items:center;gap:3px}
 .icon-btn{
   background:none;border:none;cursor:pointer;padding:7px;border-radius:7px;
-  color:var(--muted);display:flex;align-items:center;
+  color:var(--muted);display:flex;align-items:center;justify-content:center;
 }
+.icon-btn svg{display:block;width:16px;height:16px}
 .icon-btn:hover{color:var(--ink);background:var(--hover)}
 
 /* ── 토큰 패널 ── */
@@ -373,13 +374,28 @@ let tagState={}, kw="", activeCat=null;
 let edCat=null; const edSel=new Set(); let edSearch="";
 let COLLECTIONS=[], modalItem=null, modalTags=[];
 let allTagPool=[];   // 계정 전체 태그 (모달 자동완성용)
+function refreshTagPoolFromCache(){
+  const pool=new Set(allTagPool);
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&k.indexOf("rd_items_")===0){
+        try{ (JSON.parse(localStorage.getItem(k)).items||[]).forEach(it=>(it.tags||[]).forEach(t=>t&&pool.add(t))); }catch(e){}
+      }
+    }
+  }catch(e){}
+  (collCache&&Object.values(collCache)||[]).forEach(items=>(items||[]).forEach(it=>(it.tags||[]).forEach(t=>t&&pool.add(t))));
+  allTagPool=[...pool];
+}
 async function loadAllTags(){
   try{ const c=store.get("rd_alltags"); if(c) allTagPool=JSON.parse(c); }catch(e){}
-  try{
-    const d=await rdApi("/tags");
-    const tags=(d.items||[]).map(t=>t._id).filter(Boolean);
-    if(tags.length){ allTagPool=tags; store.set("rd_alltags",JSON.stringify(tags)); }
-  }catch(e){}
+  refreshTagPoolFromCache();               // 캐시된 모든 컬렉션 태그 합치기
+  const pool=new Set(allTagPool);
+  for(const p of ["/tags","/tags/0"]){     // 계정 전체 태그 API (되면 사용)
+    try{ const d=await rdApi(p); const tags=(d.items||[]).map(t=>t._id).filter(Boolean); if(tags.length){ tags.forEach(t=>pool.add(t)); break; } }catch(e){}
+  }
+  allTagPool=[...pool];
+  try{ store.set("rd_alltags",JSON.stringify(allTagPool)); }catch(e){}
 }
 const collCache={}, synCache={}, inflight={};
 
@@ -902,6 +918,7 @@ function buildModal(){
 
 function openModal(it){
   buildModal();
+  refreshTagPoolFromCache();   // 그동안 불러온 컬렉션 태그까지 자동완성에 반영
   modalItem=it;
   modalTags=[...(it.tags||[])];
   M.title.value=it.title||"";
