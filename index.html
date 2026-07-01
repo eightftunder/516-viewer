@@ -110,6 +110,8 @@ button:disabled{opacity:.4;cursor:default}
   padding-bottom:var(--pad);border-bottom:1px solid var(--line);margin-bottom:var(--gap);
 }
 .search-row input{flex:1}
+.kw-wrap{flex:1;position:relative}
+.kw-wrap input{width:100%;box-sizing:border-box}
 .sort-sel{width:auto;flex-shrink:0;font-size:12px;padding:8px 9px}
 .count-pill{font-size:12px;color:var(--faint);white-space:nowrap;flex-shrink:0}
 
@@ -283,7 +285,7 @@ button:disabled{opacity:.4;cursor:default}
 
   <div class="hidden" id="mainPanel">
     <div class="search-row">
-      <input id="kw" type="search" placeholder="노트 · 제목 검색" autocomplete="off">
+      <div class="kw-wrap"><input id="kw" type="search" placeholder="노트 · 제목 · 태그 검색 (제외: -태그)" autocomplete="off"><div class="tag-suggest" id="kwSug" hidden></div></div>
       <select id="sortSel" class="sort-sel">
         <option value="saved-desc">저장 최신순</option>
         <option value="saved-asc">저장 오래된순</option>
@@ -690,15 +692,43 @@ function sortFiltered(){
     return asc?d:-d;
   });
 }
+// ── 검색창 통합 파서: 텍스트 + 태그 포함/제외를 한 입력에서 구분 ──
+// "필모 -화보 백일해" → 포함태그[필모] 제외태그[화보] 텍스트[백일해]
+// 다중 단어 태그(예: "행사 + 이벤트")도 최대 4토큰까지 묶어서 인식
+function parseQuery(raw){
+  const pool=[...new Set([...allTagPool, ...Object.keys(tagCounts())])];
+  const tagLookup=new Map(pool.filter(Boolean).map(t=>[t.toLowerCase(),t]));
+  const tokens=raw.split(/\s+/).filter(Boolean);
+  const incTags=[],excTags=[],textTokens=[];
+  let i=0;
+  while(i<tokens.length){
+    let matched=false;
+    for(let win=Math.min(4,tokens.length-i);win>=1;win--){
+      let seg=tokens.slice(i,i+win);
+      const isExc=seg[0].startsWith("-")&&seg[0].length>1;
+      if(isExc) seg=[seg[0].slice(1),...seg.slice(1)];
+      const key=seg.join(" ").toLowerCase();
+      if(tagLookup.has(key)){
+        const orig=tagLookup.get(key);
+        (isExc?excTags:incTags).push(orig);
+        i+=win; matched=true; break;
+      }
+    }
+    if(!matched){ textTokens.push(tokens[i]); i++; }
+  }
+  return {incTags:[...new Set(incTags)],excTags:[...new Set(excTags)],kwText:textTokens.join(" ")};
+}
 function applyFilter() {
-  const inc=Object.keys(tagState).filter(t=>tagState[t]==="inc");
-  const exc=Object.keys(tagState).filter(t=>tagState[t]==="exc");
-  const q=kw.trim().toLowerCase();
+  const {incTags:qInc,excTags:qExc,kwText}=parseQuery(kw);
+  const inc=[...new Set([...Object.keys(tagState).filter(t=>tagState[t]==="inc"), ...qInc])];
+  const exc=[...new Set([...Object.keys(tagState).filter(t=>tagState[t]==="exc"), ...qExc])];
+  const q=kwText.trim().toLowerCase();
+  const kwToks=q?q.split(/\s+/).filter(Boolean):[];
   filtered=ALL.filter(it=>{
     const tags=it.tags||[];
     if(inc.length&&!inc.every(t=>tags.includes(t))) return false;
     if(exc.some(t=>tags.includes(t))) return false;
-    if(q){const hay=((it.title||"")+" "+noteOf(it)).toLowerCase();if(!hay.includes(q)) return false;}
+    if(kwToks.length){const hay=((it.title||"")+" "+noteOf(it)).toLowerCase();if(!kwToks.every(w=>hay.includes(w))) return false;}
     return true;
   });
   sortFiltered();
@@ -1231,7 +1261,49 @@ $("#connectBtn").onclick=connect;
 $("#tokInput").addEventListener("keydown",e=>{if(e.key==="Enter")connect();});
 $("#lockBtn").onclick=()=>{ $("#tokPanel").hidden=!$("#tokPanel").hidden; if(!$("#tokPanel").hidden){$("#tokInput").value=TOKEN;} };
 let kwTimer;
-$("#kw").addEventListener("input",e=>{kw=e.target.value;clearTimeout(kwTimer);kwTimer=setTimeout(()=>{applyFilter();},120);});
+(function setupKwAutocomplete(){
+  const inp=$("#kw"), sug=$("#kwSug");
+  let active=-1;
+  function frags(){
+    const val=inp.value, ls=val.lastIndexOf(" ");
+    const prefix=ls>=0?val.slice(0,ls+1):"";
+    let frag=val.slice(ls+1), neg="";
+    if(frag.startsWith("-")){ neg="-"; frag=frag.slice(1); }
+    return {prefix,neg,frag};
+  }
+  function pick(t){
+    const {prefix,neg}=frags();
+    inp.value=prefix+neg+t+" ";
+    kw=inp.value; sug.hidden=true; active=-1;
+    inp.focus(); applyFilter();
+  }
+  function refreshSug(){
+    const {frag}=frags(); const q=frag.trim().toLowerCase();
+    sug.innerHTML=""; active=-1;
+    if(!q){ sug.hidden=true; return; }
+    const {incTags,excTags}=parseQuery(inp.value);
+    const used=new Set([...incTags,...excTags]);
+    const pool=[...new Set([...allTagPool, ...Object.keys(tagCounts())])].filter(Boolean);
+    const matches=pool.filter(t=>t.toLowerCase().includes(q)&&!used.has(t))
+      .sort((a,b)=>{const A=a.toLowerCase().startsWith(q),B=b.toLowerCase().startsWith(q);return A===B?a.localeCompare(b):A?-1:1;})
+      .slice(0,8);
+    if(!matches.length){ sug.hidden=true; return; }
+    matches.forEach(t=>{ const d=el("div",null,t); d.onmousedown=e=>{e.preventDefault();pick(t);}; sug.appendChild(d); });
+    sug.hidden=false;
+  }
+  function highlight(){ [...sug.children].forEach((d,i)=>d.classList.toggle("active",i===active)); const a=sug.children[active]; if(a)a.scrollIntoView({block:"nearest"}); }
+  inp.addEventListener("input",()=>{ kw=inp.value; refreshSug(); clearTimeout(kwTimer); kwTimer=setTimeout(()=>applyFilter(),120); });
+  inp.addEventListener("keydown",e=>{
+    const items=[...sug.children];
+    if(!sug.hidden&&items.length){
+      if(e.key==="ArrowDown"){ e.preventDefault(); active=(active+1)%items.length; highlight(); return; }
+      if(e.key==="ArrowUp"){ e.preventDefault(); active=(active-1+items.length)%items.length; highlight(); return; }
+      if(e.key==="Enter"&&active>=0){ e.preventDefault(); pick(items[active].textContent); return; }
+      if(e.key==="Escape"){ sug.hidden=true; active=-1; return; }
+    }
+  });
+  inp.addEventListener("blur",()=>setTimeout(()=>{sug.hidden=true;},150));
+})();
 $("#resetBtn").onclick=()=>{tagState={};kw="";activeCat=null;const k=$("#kw");if(k)k.value="";buildFilter();applyFilter();};
 $("#editBtn").onclick=openEditor;
 $("#closeEditorBtn").onclick=closeEditor;
