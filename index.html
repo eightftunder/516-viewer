@@ -372,6 +372,8 @@ let curCollId=null, curCollTitle="";
 let tagGroups={}, configSha=null;
 let tagState={}, kw="", activeCat=null;
 let edCat=null; const edSel=new Set(); let edSearch="";
+let edRecentTags=(()=>{try{return JSON.parse(store.get("ed_recent")||"[]")}catch(e){return[]}})();
+function pushRecentTag(t){ edRecentTags=[t,...edRecentTags.filter(x=>x!==t)].slice(0,20); try{store.set("ed_recent",JSON.stringify(edRecentTags));}catch(e){} }
 let COLLECTIONS=[], modalItem=null, modalTags=[];
 let allTagPool=[];   // 계정 전체 태그 (모달 자동완성용)
 function refreshTagPoolFromCache(){
@@ -787,12 +789,19 @@ function renderEditor() {
   function fillPool(){
     pool.innerHTML="";
     const q=edSearch.trim().toLowerCase();
-    const shown=unassigned.filter(t=>!q||t.toLowerCase().includes(q));
-    if(!shown.length){ pool.appendChild(el("span","ed-empty", unassigned.length?"검색 결과 없음":"미분류 태그 없음")); return; }
+    let shown;
+    if(q){                                   // 검색 중 → 전체 미분류에서 매칭 결과
+      shown=unassigned.filter(t=>t.toLowerCase().includes(q)).slice(0,12);
+    }else{                                   // 기본 → 최근 사용 6개 (부족하면 많이 쓴 순으로 채움)
+      shown=edRecentTags.filter(t=>!assigned.has(t)&&allTags.includes(t));
+      for(const t of unassigned){ if(shown.length>=6) break; if(!shown.includes(t)) shown.push(t); }
+      shown=shown.slice(0,6);
+    }
+    if(!shown.length){ pool.appendChild(el("span","ed-empty", q?"검색 결과 없음":"미분류 태그 없음")); return; }
     shown.forEach(t=>{
       const b=el("button","tg");
       b.innerHTML=esc(t)+(ct[t]?`<span class="c">${ct[t]}</span>`:"");
-      b.onclick=()=>{ cats[edCat].push(t); renderEditor(); };  // 클릭 즉시 현재 그룹에 추가
+      b.onclick=()=>{ pushRecentTag(t); cats[edCat].push(t); renderEditor(); };  // 클릭 즉시 현재 그룹에 추가 + 최근사용 기록
       pool.appendChild(b);
     });
   }
