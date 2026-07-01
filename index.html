@@ -233,7 +233,8 @@ button:disabled{opacity:.4;cursor:default}
 .tag-input-wrap{position:relative;flex:1;min-width:90px}
 .tag-input-wrap input{width:100%;height:30px;padding:4px 11px;font-size:13px}
 .tag-suggest{position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--line2);border-radius:8px;margin-top:4px;max-height:160px;overflow:auto;z-index:10}
-.tag-suggest div{padding:8px 11px;font-size:13px;cursor:pointer}
+.tag-suggest div{padding:8px 11px;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.tag-suggest div .c{opacity:.5;font-size:11px;flex-shrink:0}
 .tag-suggest div.active,.tag-suggest div:hover{background:var(--hover)}
 .modal-actions{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-top:2px}
 .modal-actions .right{display:flex;gap:8px}
@@ -285,7 +286,7 @@ button:disabled{opacity:.4;cursor:default}
 
   <div class="hidden" id="mainPanel">
     <div class="search-row">
-      <div class="kw-wrap"><input id="kw" type="search" placeholder="노트 · 제목 · 태그 검색 (제외: -태그)" autocomplete="off"><div class="tag-suggest" id="kwSug" hidden></div></div>
+      <div class="kw-wrap"><input id="kw" type="search" placeholder="and:태그  or:태그  -태그  note:단어" autocomplete="off"><div class="tag-suggest" id="kwSug" hidden></div></div>
       <select id="sortSel" class="sort-sel">
         <option value="saved-desc">저장 최신순</option>
         <option value="saved-asc">저장 오래된순</option>
@@ -419,6 +420,13 @@ const collCache={}, synCache={}, inflight={};
 const $  = s => document.querySelector(s);
 const el = (t,c,x) => { const e=document.createElement(t); if(c)e.className=c; if(x!=null)e.textContent=x; return e };
 const esc = s => String(s??"").replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+// 자동완성 드롭다운 항목: 태그명 + 오른쪽 개수. data-tag에 원본 저장(키보드 선택용)
+function sugItem(name,count,onPick){
+  const d=el("div"); d.dataset.tag=name;
+  d.innerHTML=`<span>${esc(name)}</span>`+(count?`<span class="c">${count}</span>`:"");
+  d.onmousedown=e=>{ e.preventDefault(); onPick(name); };
+  return d;
+}
 const b64enc = s => btoa(unescape(encodeURIComponent(s)));
 const b64dec = s => decodeURIComponent(escape(atob(s.replace(/\s/g,""))));
 
@@ -692,34 +700,40 @@ function sortFiltered(){
     return asc?d:-d;
   });
 }
-// ── 검색창 통합 파서: 텍스트 + 태그 포함/제외를 한 입력에서 구분 ──
-// "필모 -화보 백일해" → 포함태그[필모] 제외태그[화보] 텍스트[백일해]
-// 다중 단어 태그(예: "행사 + 이벤트")도 최대 4토큰까지 묶어서 인식
-function parseQuery(raw){
-  const pool=[...new Set([...allTagPool, ...Object.keys(tagCounts())])];
-  const tagLookup=new Map(pool.filter(Boolean).map(t=>[t.toLowerCase(),t]));
-  const tokens=raw.split(/\s+/).filter(Boolean);
-  const incTags=[],excTags=[],textTokens=[];
-  let i=0;
-  while(i<tokens.length){
-    let matched=false;
-    for(let win=Math.min(4,tokens.length-i);win>=1;win--){
-      let seg=tokens.slice(i,i+win);
-      const isExc=seg[0].startsWith("-")&&seg[0].length>1;
-      if(isExc) seg=[seg[0].slice(1),...seg.slice(1)];
-      const key=seg.join(" ").toLowerCase();
-      if(tagLookup.has(key)){
-        const orig=tagLookup.get(key);
-        (isExc?excTags:incTags).push(orig);
-        i+=win; matched=true; break;
-      }
-    }
-    if(!matched){ textTokens.push(tokens[i]); i++; }
+// ── 검색창 파서: 접두사로 명시 ──
+// and:태그 (포함, 여러개=AND) · or:태그 (여러개=OR그룹, 하나라도) · not:태그 또는 -태그 (제외) · note:단어 (노트/제목 텍스트)
+// 접두사 없는 단어 = 텍스트(노트/제목). 공백 있는 태그는 따옴표: and:"행사 + 이벤트"
+function splitQ(raw){
+  const toks=[]; let cur="", inq=false;
+  for(const ch of (raw||"")){
+    if(ch==='"'){ inq=!inq; continue; }
+    if(/\s/.test(ch)&&!inq){ if(cur){toks.push(cur);cur="";} }
+    else cur+=ch;
   }
-  return {incTags:[...new Set(incTags)],excTags:[...new Set(excTags)],kwText:textTokens.join(" ")};
+  if(cur) toks.push(cur);
+  return toks;
+}
+function parseQuery(raw){
+  const pool=[...new Set([...allTagPool, ...Object.keys(tagCounts())])].filter(Boolean);
+  const tagLookup=new Map(pool.map(t=>[t.toLowerCase(),t]));
+  const incTags=[],excTags=[],orTags=[],textTokens=[];
+  for(const tk of splitQ(raw)){
+    let pre="", val=tk;
+    const mm=tk.match(/^(and|or|not|note):(.*)$/i);
+    if(mm){ pre=mm[1].toLowerCase(); val=mm[2]; }
+    else if(tk[0]==="-"&&tk.length>1){ pre="not"; val=tk.slice(1); }
+    val=val.trim(); if(!val) continue;
+    const tag=tagLookup.get(val.toLowerCase());
+    if(pre==="note") textTokens.push(val);
+    else if(pre==="and"){ tag?incTags.push(tag):textTokens.push(val); }
+    else if(pre==="or"){ if(tag) orTags.push(tag); }
+    else if(pre==="not"){ if(tag) excTags.push(tag); }
+    else textTokens.push(val);                 // 접두사 없음 → 텍스트
+  }
+  return {incTags:[...new Set(incTags)],excTags:[...new Set(excTags)],orTags:[...new Set(orTags)],kwText:textTokens.join(" ")};
 }
 function applyFilter() {
-  const {incTags:qInc,excTags:qExc,kwText}=parseQuery(kw);
+  const {incTags:qInc,excTags:qExc,orTags,kwText}=parseQuery(kw);
   const inc=[...new Set([...Object.keys(tagState).filter(t=>tagState[t]==="inc"), ...qInc])];
   const exc=[...new Set([...Object.keys(tagState).filter(t=>tagState[t]==="exc"), ...qExc])];
   const q=kwText.trim().toLowerCase();
@@ -728,6 +742,7 @@ function applyFilter() {
     const tags=it.tags||[];
     if(inc.length&&!inc.every(t=>tags.includes(t))) return false;
     if(exc.some(t=>tags.includes(t))) return false;
+    if(orTags.length&&!orTags.some(t=>tags.includes(t))) return false;
     if(kwToks.length){const hay=((it.title||"")+" "+noteOf(it)).toLowerCase();if(!kwToks.every(w=>hay.includes(w))) return false;}
     return true;
   });
@@ -824,11 +839,7 @@ function renderEditor() {
     if(!q){ sug.hidden=true; return; }
     const matches=unassigned.filter(t=>t.toLowerCase().includes(q)).slice(0,8);
     if(!matches.length){ sug.hidden=true; return; }
-    matches.forEach(t=>{
-      const d=el("div",null,t+(ct[t]?`  ${ct[t]}`:""));
-      d.onmousedown=e=>{ e.preventDefault(); addFromEditor(t); };
-      sug.appendChild(d);
-    });
+    matches.forEach(t=>sug.appendChild(sugItem(t,ct[t],addFromEditor)));
     sug.hidden=false;
   }
   si.oninput=refreshSug;
@@ -1049,13 +1060,10 @@ function renderModalTags(){
     const q=inp.value.trim().toLowerCase();
     sug.innerHTML=""; active=-1;
     if(!q){ sug.hidden=true; return; }
+    const cc=tagCounts();
     const matches=currentPool().filter(t=>t.toLowerCase().includes(q)&&!modalTags.includes(t)).slice(0,8);
     if(!matches.length){ sug.hidden=true; return; }
-    matches.forEach(t=>{
-      const d=el("div",null,t);
-      d.onmousedown=e=>{e.preventDefault();addTag(t);};
-      sug.appendChild(d);
-    });
+    matches.forEach(t=>sug.appendChild(sugItem(t,cc[t],addTag)));
     sug.hidden=false;
   }
   function addTag(t){
@@ -1071,7 +1079,7 @@ function renderModalTags(){
     else if(e.key==="ArrowUp"){ e.preventDefault(); if(items.length){ active=(active-1+items.length)%items.length; highlight(); } }
     else if(e.key==="Enter"){
       e.preventDefault();
-      if(active>=0&&items[active]) addTag(items[active].textContent);
+      if(active>=0&&items[active]) addTag(items[active].dataset.tag);
       else if(inp.value.trim()) addTag(inp.value);
     }
     else if(e.key==="Escape"){ if(!sug.hidden){ e.stopPropagation(); sug.hidden=true; } }
@@ -1266,29 +1274,36 @@ let kwTimer;
   let active=-1;
   function frags(){
     const val=inp.value, ls=val.lastIndexOf(" ");
-    const prefix=ls>=0?val.slice(0,ls+1):"";
-    let frag=val.slice(ls+1), neg="";
-    if(frag.startsWith("-")){ neg="-"; frag=frag.slice(1); }
-    return {prefix,neg,frag};
+    const prefix=ls>=0?val.slice(0,ls+1):"";      // 앞부분(이미 입력된 조건들) 유지
+    const token=val.slice(ls+1);                   // 지금 치는 토큰
+    let pre="", frag=token;
+    const mm=token.match(/^(and|or|not|note):(.*)$/i);
+    if(mm){ pre=mm[1].toLowerCase()+":"; frag=mm[2]; }
+    else if(token[0]==="-"){ pre="-"; frag=token.slice(1); }
+    return {prefix,pre,frag};
   }
   function pick(t){
-    const {prefix,neg}=frags();
-    inp.value=prefix+neg+t+" ";
+    const {prefix,pre}=frags();
+    const p = pre || "and:";                        // 접두사 없이 고르면 기본 포함(and:)
+    const val = /\s/.test(t) ? `"${t}"` : t;         // 공백 있는 태그는 따옴표
+    inp.value = prefix + p + val + " ";
     kw=inp.value; sug.hidden=true; active=-1;
     inp.focus(); applyFilter();
   }
   function refreshSug(){
-    const {frag}=frags(); const q=frag.trim().toLowerCase();
+    const {pre,frag}=frags(); const q=frag.trim().toLowerCase();
     sug.innerHTML=""; active=-1;
+    if(pre==="note:"){ sug.hidden=true; return; }    // 텍스트 검색은 자동완성 안 함
     if(!q){ sug.hidden=true; return; }
-    const {incTags,excTags}=parseQuery(inp.value);
-    const used=new Set([...incTags,...excTags]);
-    const pool=[...new Set([...allTagPool, ...Object.keys(tagCounts())])].filter(Boolean);
+    const {incTags,excTags,orTags}=parseQuery(inp.value);
+    const used=new Set([...incTags,...excTags,...orTags]);
+    const ct=tagCounts();
+    const pool=[...new Set([...allTagPool, ...Object.keys(ct)])].filter(Boolean);
     const matches=pool.filter(t=>t.toLowerCase().includes(q)&&!used.has(t))
-      .sort((a,b)=>{const A=a.toLowerCase().startsWith(q),B=b.toLowerCase().startsWith(q);return A===B?a.localeCompare(b):A?-1:1;})
+      .sort((a,b)=>{const A=a.toLowerCase().startsWith(q),B=b.toLowerCase().startsWith(q);return A===B?(ct[b]||0)-(ct[a]||0)||a.localeCompare(b):A?-1:1;})
       .slice(0,8);
     if(!matches.length){ sug.hidden=true; return; }
-    matches.forEach(t=>{ const d=el("div",null,t); d.onmousedown=e=>{e.preventDefault();pick(t);}; sug.appendChild(d); });
+    matches.forEach(t=>sug.appendChild(sugItem(t,ct[t],pick)));
     sug.hidden=false;
   }
   function highlight(){ [...sug.children].forEach((d,i)=>d.classList.toggle("active",i===active)); const a=sug.children[active]; if(a)a.scrollIntoView({block:"nearest"}); }
@@ -1298,7 +1313,7 @@ let kwTimer;
     if(!sug.hidden&&items.length){
       if(e.key==="ArrowDown"){ e.preventDefault(); active=(active+1)%items.length; highlight(); return; }
       if(e.key==="ArrowUp"){ e.preventDefault(); active=(active-1+items.length)%items.length; highlight(); return; }
-      if(e.key==="Enter"&&active>=0){ e.preventDefault(); pick(items[active].textContent); return; }
+      if(e.key==="Enter"&&active>=0){ e.preventDefault(); pick(items[active].dataset.tag); return; }
       if(e.key==="Escape"){ sug.hidden=true; active=-1; return; }
     }
   });
