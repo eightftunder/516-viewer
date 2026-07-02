@@ -556,6 +556,43 @@ function showCacheMsg(id,title){
 }
 function hideCacheMsg(){ $("#cacheRow").classList.add("hidden"); $("#cacheRow").innerHTML=""; }
 
+// ── 캐시 정합성 헬퍼: 현재 뷰가 아닌 컬렉션의 캐시(메모리→없으면 localStorage 직접)를 패치 ──
+function persistColl(cid){
+  if(!collCache[cid]) return;
+  try{ store.set(lsKey(cid), JSON.stringify({at:Date.now(), items:collCache[cid].map(slim)})); }
+  catch(e){ console.warn("[516] 캐시 저장 실패 (용량?)", cid, e); }
+}
+function cacheMutate(cid, fn){          // fn(items) → 새 배열 또는 제자리 수정 후 그 배열 반환
+  if(cid==null||cid===curCollId) return;   // 현재 뷰는 메인 흐름이 처리
+  if(collCache[cid]){ collCache[cid]=fn(collCache[cid])||collCache[cid]; persistColl(cid); return; }
+  try{
+    const raw=store.get(lsKey(cid)); if(!raw) return;
+    const o=JSON.parse(raw); o.items=fn(o.items||[])||o.items; o.at=Date.now();
+    store.set(lsKey(cid), JSON.stringify(o));
+  }catch(e){ console.warn("[516] 캐시 패치 실패", cid, e); }
+}
+const cacheSortedInsert=(its,obj)=>{     // created 내림차순 위치에 삽입 (중복 방지)
+  if(its.some(x=>x._id===obj._id)) return its;
+  const i=its.findIndex(x=>(x.created||"")<(obj.created||""));
+  i<0?its.push(obj):its.splice(i,0,obj);
+  return its;
+};
+// 이동/수정/삭제 후 다른 컬렉션 캐시 동기화
+function syncCachesAfterEdit(it,{movedFrom,movedTo,deleted}={}){
+  const s=slim(it);
+  if(deleted){
+    cacheMutate(it.collectionId, its=>its.filter(x=>x._id!==it._id));
+    cacheMutate(0, its=>its.filter(x=>x._id!==it._id));
+    return;
+  }
+  if(movedFrom!=null) cacheMutate(movedFrom, its=>its.filter(x=>x._id!==it._id));
+  if(movedTo!=null)   cacheMutate(movedTo,  its=>cacheSortedInsert(its,s));
+  // 항목이 속한 다른 캐시들(자기 컬렉션·All)의 내용 갱신
+  const patch=its=>{ const t=its.find(x=>x._id===it._id); if(t&&t!==it) Object.assign(t,s); return its; };
+  cacheMutate(it.collectionId, patch);
+  cacheMutate(0, patch);
+}
+
 // All(0) 네트워크 로드 결과를 컬렉션별 캐시에 배분 → All 새로고침 = 전체 새로고침
 function distributeFromAll(items){
   const by={};
@@ -564,15 +601,16 @@ function distributeFromAll(items){
     if(cid==null) return;
     (by[cid]=by[cid]||[]).push(it);
   });
+  // Unsorted(-1)는 COLLECTIONS에 없으므로 명시적으로 포함
+  const ids=[...new Set([-1, ...COLLECTIONS.map(c=>c.id)])].filter(id=>id!==0);
   let n=0;
-  COLLECTIONS.forEach(c=>{
-    if(c.id===0) return;
-    const list=by[c.id]||[];
-    collCache[c.id]=list;
-    try{ store.set(lsKey(c.id), JSON.stringify({at:Date.now(), items:list.map(slim)})); }catch(e){}
-    n++;
+  ids.forEach(id=>{
+    const list=by[id]||[];
+    collCache[id]=list;
+    try{ store.set(lsKey(id), JSON.stringify({at:Date.now(), items:list.map(slim)})); n++; }
+    catch(e){ console.warn("[516] 배분 저장 실패", id, e); }
   });
-  console.log(`[516] All → ${n}개 컬렉션 캐시 배분 완료`);
+  console.log(`[516] All → ${n}개 컬렉션 캐시 배분 완료 (Unsorted 포함)`);
 }
 
 async function loadAll(id,title,forceRefresh) {
@@ -617,6 +655,7 @@ async function loadAll(id,title,forceRefresh) {
       $("#prog").firstElementChild.style.width=Math.min(100,ALL.length/Math.max(total,1)*100)+"%";
       $("#loadMsg").textContent=`${ALL.length} / ${total}`;
     }
+    ALL=[...new Map(ALL.map(x=>[x._id,x])).values()];   // _id 중복 제거 (페이징 겹침 보험)
     collCache[id]=ALL; saveLocalCache(id);
     if(id===0) distributeFromAll(ALL);                   // All이면 컬렉션별 캐시까지 갱신
     $("#prog").classList.add("hidden");
@@ -1200,8 +1239,9 @@ async function saveModal(){
     if(moved){
       it.collectionId=newColl; if(it.collection) it.collection.$id=newColl;
       if(curCollId!==0&&curCollId!==-1&&newColl!==curCollId){ const i=ALL.indexOf(it); if(i>=0) ALL.splice(i,1); }
-    }
+    } else if(it.collectionId==null) it.collectionId=oldColl;
     collCache[curCollId]=ALL; saveLocalCache(curCollId);
+    syncCachesAfterEdit(it, moved?{movedFrom:oldColl,movedTo:newColl}:{});  // 출발지·도착지·All 캐시 동기화
     closeModal(); buildFilter(); applyFilter({keepShown:true});
   }catch(e){
     M.msg.className="modal-msg err"; M.msg.textContent="저장 실패: "+e.message;
@@ -1217,6 +1257,8 @@ async function deleteModal(){
     await rdDelete(it._id);
     const i=ALL.indexOf(it); if(i>=0) ALL.splice(i,1);
     collCache[curCollId]=ALL; saveLocalCache(curCollId);
+    if(it.collectionId==null&&it.collection) it.collectionId=it.collection.$id;
+    syncCachesAfterEdit(it,{deleted:true});   // 자기 컬렉션·All 캐시에서도 제거
     closeModal(); buildFilter(); applyFilter({keepShown:true});
   }catch(e){
     M.msg.className="modal-msg err"; M.msg.textContent="삭제 실패: "+e.message;
